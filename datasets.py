@@ -67,7 +67,7 @@ def get_normal_class(dataset='cifar10', normal_class_indx = 0):
     elif dataset == 'svhn':
         return get_SVHN_normal(normal_class_indx)
     elif dataset == 'mvtec':
-        return get_MVTEC(normal_class_indx)
+        return get_MVTEC_normal(normal_class_indx)
     else:
         raise Exception("Dataset is not supported yet. ")
 
@@ -116,22 +116,22 @@ class MVTecDataset(Dataset):
     def __init__(self, root, category, transform=None, target_transform=None, train=True, normal=True):
         self.transform = transform
         if train:
-            self.image_files = glob(
+            self.data = glob(
                 os.path.join(root, category, "train", "good", "*.png")
             )
         else:
           image_files = glob(os.path.join(root, category, "test", "*", "*.png"))
           normal_image_files = glob(os.path.join(root, category, "test", "good", "*.png"))
           anomaly_image_files = list(set(image_files) - set(normal_image_files))
-          self.image_files = image_files
+          self.data = image_files
 
-        self.image_files.sort(key=lambda y: y.lower())
+        self.data.sort(key=lambda y: y.lower())
+        self.data = [Image.open(x).convert('RGB') for x in self.data]
         self.train = train
 
     def __getitem__(self, index):
-        image_file = self.image_files[index]
-        image = Image.open(image_file)
-        image = image.convert('RGB')
+        image_file = self.data[index]
+
         if self.transform is not None:
             image = self.transform(image)
 
@@ -143,16 +143,16 @@ class MVTecDataset(Dataset):
         return image, target
 
     def __len__(self):
-        return len(self.image_files)
+        return len(self.data)
 
 
-def get_MVTEC(normal_class_indx):
+def get_MVTEC_normal(normal_class_indx):
     normal_class = mvtec_labels[normal_class_indx]
 
     trainset = MVTecDataset(MVTEC_PATH, normal_class, train=True)
     testset = MVTecDataset(MVTEC_PATH, normal_class, train=False)
 
-    return trainset[:, 0], testset
+    return trainset.data, testset
 
 
 def download_and_extract_mvtec(path):
@@ -164,3 +164,146 @@ def download_and_extract_mvtec(path):
     filename = wget.download(url, out=path)
     with tarfile.open(os.path.join(path, filename)) as so:
         so.extractall(path=os.path.join(path, "mvtec_anomaly_detection"))
+
+
+def get_exposure(dataset='cifar10', normal_dataset='cifar100', normal_class_indx = 0):
+
+    if dataset == 'cifar10':
+        return get_CIFAR10_exposure(normal_class_indx)
+    elif dataset == 'mnist':
+        return get_MNIST_exposure(normal_class_indx)
+    elif dataset == 'fashion':
+        return get_FASHION_MNIST_exposure(normal_class_indx)
+    elif dataset == 'svhn':
+        return get_SVHN_exposure(normal_class_indx)
+    elif dataset == 'mvtec':
+        return get_MVTEC_exposure(normal_class_indx)
+    else:
+        raise Exception("Dataset is not supported yet. ")
+    
+
+def copy_dataset(dataset, target_count):
+    pass
+
+
+def get_CIFAR10_exposure(normal_dataset, normal_class_indx:int, count:int):
+    assert count > 0
+    
+    exposure_train = CIFAR10(root=CIFAR10_PATH, train=True, download=True)
+    exposure_test = CIFAR10(root=CIFAR10_PATH, train=False, download=True)
+
+    if normal_dataset.lower() == 'cifar10':
+        exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
+        exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
+
+    exposure_data = exposure_train.data
+
+    if len(exposure_data) < count:
+        exposure_data += exposure_test.data
+    
+    if len(exposure_data) < count:
+        copy_dataset(exposure_data, count)
+
+
+    return exposure_data
+
+
+def get_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):
+    assert count > 0
+    
+    exposure_train = MNIST(root=MNIST_PATH, train=True, download=True)
+    exposure_test = MNIST(root=MNIST_PATH, train=False, download=True)
+
+    if normal_dataset.lower() == 'mnist':
+        exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
+        exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
+
+    exposure_data = exposure_train.data
+
+    if len(exposure_data) < count:
+        exposure_data += exposure_test.data
+    
+    if len(exposure_data) < count:
+        copy_dataset(exposure_data, count)
+
+
+    return exposure_data
+
+
+def get_FASHION_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):
+    assert count > 0
+    
+    exposure_train = FashionMNIST(root=FMNIST_PATH, train=True, download=True)
+    exposure_test = FashionMNIST(root=FMNIST_PATH, train=False, download=True)
+
+    if normal_dataset.lower() == 'fmnist':
+        exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
+        exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
+
+    exposure_data = exposure_train.data
+
+    if len(exposure_data) < count:
+        exposure_data += exposure_test.data
+    
+    if len(exposure_data) < count:
+        copy_dataset(exposure_data, count)
+
+
+    return exposure_data
+
+
+def get_SVHN_exposure(normal_dataset, normal_class_indx:int, count:int):
+    assert count > 0
+    
+    exposure_train = SVHN(root=SVHN_PATH, split='train', download=True)
+    exposure_test = SVHN(root=SVHN_PATH, split='test', download=True)
+
+    if normal_dataset.lower() == 'svhn':
+        exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
+        exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
+
+    exposure_data = exposure_train.data
+
+    if len(exposure_data) < count:
+        exposure_data += exposure_test.data
+    
+    if len(exposure_data) < count:
+        copy_dataset(exposure_data, count)
+
+
+    return exposure_data
+
+
+class MVTecDatasetExposure(Dataset):
+    def __init__(self, root, category=None, transform=None):
+        self.transform = transform
+        self.data = glob(os.path.join(root, "**", "*.png"), recursive=True)
+
+        if category is not None:
+          class_files = glob(os.path.join(root, category, "**", "*.png"), recursive=True)
+          self.data = list(set(self.data) - set(class_files))
+
+        self.data.sort(key=lambda y: y.lower())
+        self.data = [Image.open(x).convert('RGB') for x in self.data]
+
+    def __getitem__(self, index):
+        image_file = self.data[index]
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image
+
+    def __len__(self):
+        return len(self.data)
+    
+
+
+def get_MVTEC_exposure(normal_dataset, normal_class_indx:int, count:int):
+    assert count > 0
+    
+    exposure_data = MVTecDatasetExposure(root=SVHN_PATH).data
+
+    if len(exposure_data) < count:
+        copy_dataset(exposure_data, count)
+
+    return exposure_data
