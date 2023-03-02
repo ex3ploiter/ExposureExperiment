@@ -7,28 +7,60 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 from PIL import Image
 from glob import glob
-from utills import sparse2coarse
+from utills import sparse2coarse, mvtec_labels
 from constants import CIFAR10_PATH, CIFAR100_PATH, MNIST_PATH, FMNIST_PATH, SVHN_PATH, MVTEC_PATH
 
-class MyDataset_Binary(torch.utils.data.Dataset):
-  'Characterizes a dataset for PyTorch'
-  def __init__(self, x, labels,transform):
-        'Initialization'
-        super(MyDataset_Binary, self).__init__()
-        self.labels = labels
-        self.x = x
+
+class GeneralDataset(torch.utils.data.Dataset):
+    def __init__(self, normal_data, exposure_data, transform=None):
         self.transform = transform
+        normal_data, exposure_data = np.array(normal_data).tolist(),  np.array(exposure_data).tolist()
+        self.data = normal_data + exposure_data
+        self.data = [Image.fromarray(x) for x in self.data]
+        self.targets = [0] * len(normal_data) + [1] * len(exposure_data)
 
-  def __len__(self):
-        'Denotes the total number of samples'
-        return len(self.x)
+    def __getitem__(self, index):
+        image = self.data[index]
+        target = self.targets[index]
+        
+        if self.transform is not None:
+            image = self.transform(image)
 
-  def __getitem__(self, index):
-        'Generates one sample of data'
-        x = self.transform(self.x[index])
-        y = self.labels[index]
-       
-        return x, y
+        return image, target
+
+    def __len__(self):
+        return len(self.data)
+    
+def get_dataloader(normal_dataset:str, normal_class_indx:int, exposure_dataset:str, batch_size):
+
+    transform = None
+
+    is_big: bool = True if normal_dataset in ['mvtec', 'ctscan'] else False
+    is_colorful: bool = True if normal_dataset in ['cifar10', 'cifar100', 'svhn', 'mvtec'] else False
+
+    if is_big:
+        if is_colorful:
+            transform = tansform_224
+        else:
+            transform = tansform_224_gray
+    else:
+        if is_colorful:
+            transform = tansform_32
+        else:
+            transform = tansform_32_gray
+
+    normal_data, testset = get_normal_class(dataset=normal_dataset, normal_class_indx=normal_class_indx, transform=transform)
+    exposure_data = get_exposure(dataset=exposure_dataset, normal_dataset=normal_dataset, normal_class_indx=normal_class_indx, count=len(normal_data))
+
+    trainset = GeneralDataset(normal_data=normal_data, exposure_data=exposure_data, transform=transform)
+    del exposure_data, normal_data
+
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
+
+    return train_loader, test_loader
+    
+
   
 tansform_224 = transforms.Compose([
                                     transforms.CenterCrop(224),
@@ -52,79 +84,75 @@ tansform_32_gray = transforms.Compose([
                                     transforms.ToTensor()
                                 ])
 
-mvtec_labels = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'leather',
-                'metal_nut', 'pill', 'screw', 'tile', 'toothbrush', 'transistor',
-                'wood', 'zipper']
-
 
 ####################
 #  Normal Datastes #
 ####################
 
-def get_normal_class(dataset='cifar10', normal_class_indx = 0):
+def get_normal_class(dataset='cifar10', normal_class_indx = 0,  transform=None):
 
     if dataset == 'cifar10':
-        return get_CIFAR10_normal(normal_class_indx)
+        return get_CIFAR10_normal(normal_class_indx, transform)
     elif dataset == 'cifar100':
-        return get_CIFAR100_normal(normal_class_indx)
+        return get_CIFAR100_normal(normal_class_indx, transform)
     elif dataset == 'mnist':
-        return get_MNIST_normal(normal_class_indx)
+        return get_MNIST_normal(normal_class_indx, v)
     elif dataset == 'fashion':
-        return get_FASHION_MNIST_normal(normal_class_indx)
+        return get_FASHION_MNIST_normal(normal_class_indx, transform)
     elif dataset == 'svhn':
-        return get_SVHN_normal(normal_class_indx)
+        return get_SVHN_normal(normal_class_indx, transform)
     elif dataset == 'mvtec':
-        return get_MVTEC_normal(normal_class_indx)
+        return get_MVTEC_normal(normal_class_indx, transform)
     else:
         raise Exception("Dataset is not supported yet. ")
 
 
-def get_CIFAR10_normal(normal_class_indx:int):
+def get_CIFAR10_normal(normal_class_indx:int, transform):
     trainset = CIFAR10(root=CIFAR10_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
-    testset = CIFAR10(root=CIFAR10_PATH, train=False, download=True)
+    testset = CIFAR10(root=CIFAR10_PATH, train=False, download=True, transform=transform)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
 
     return trainset.data, testset
 
 
-def get_CIFAR100_normal(normal_class_indx:int):
+def get_CIFAR100_normal(normal_class_indx:int, transform):
     trainset = CIFAR100(root=CIFAR100_PATH, train=True, download=True)
     trainset.targets = sparse2coarse(trainset.targets)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
-    testset = CIFAR100(root=CIFAR100_PATH, train=False, download=True)
+    testset = CIFAR100(root=CIFAR100_PATH, train=False, download=True, transform=transform)
     testset.targets = sparse2coarse(testset.targets)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
 
     return trainset.data, testset
 
 
-def get_MNIST_normal(normal_class_indx:int):
+def get_MNIST_normal(normal_class_indx:int, transform):
     trainset = MNIST(root=MNIST_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
-    testset = MNIST(root=MNIST_PATH, train=False, download=True)
+    testset = MNIST(root=MNIST_PATH, train=False, download=True, transform=transform)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
 
     return trainset.data, testset
 
 
-def get_FASHION_MNIST_normal(normal_class_indx:int):
+def get_FASHION_MNIST_normal(normal_class_indx:int, transform):
     trainset = FashionMNIST(root=FMNIST_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
-    testset = FashionMNIST(root=FMNIST_PATH, train=False, download=True)
+    testset = FashionMNIST(root=FMNIST_PATH, train=False, download=True, transform=transform)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
 
     return trainset.data, testset
 
-def get_SVHN_normal(normal_class_indx:int):
+def get_SVHN_normal(normal_class_indx:int, transform):
     trainset = SVHN(root=SVHN_PATH, split='train', download=True)
     trainset.data = trainset.data[np.array(trainset.labels) == normal_class_indx]
 
-    testset = SVHN(root=SVHN_PATH, split='test', download=True)
+    testset = SVHN(root=SVHN_PATH, split='test', download=True, transform=transform)
     testset.labels  = [int(t!=normal_class_indx) for t in testset.labels]
 
     return trainset.data, testset
@@ -149,7 +177,8 @@ class MVTecDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         image_file = self.data[index]
-
+        image = Image.open(image_file)
+        image = image.convert('RGB')
         if self.transform is not None:
             image = self.transform(image)
 
@@ -164,11 +193,11 @@ class MVTecDataset(torch.utils.data.Dataset):
         return len(self.data)
 
 
-def get_MVTEC_normal(normal_class_indx):
+def get_MVTEC_normal(normal_class_indx, transform):
     normal_class = mvtec_labels[normal_class_indx]
 
     trainset = MVTecDataset(MVTEC_PATH, normal_class, train=True)
-    testset = MVTecDataset(MVTEC_PATH, normal_class, train=False)
+    testset = MVTecDataset(MVTEC_PATH, normal_class, train=False, transform=transform)
 
     return trainset.data, testset
 
@@ -432,6 +461,8 @@ class MVTecDatasetExposure(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         image_file = self.data[index]
+        image = Image.open(image_file)
+        image = image.convert('RGB')
         if self.transform is not None:
             image = self.transform(image)
 

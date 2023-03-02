@@ -6,3 +6,6 @@ FMNIST_PATH = '~/FMNIST/'
 SVHN_PATH = '~/SVHN/'
 MVTEC_PATH = '~/MVTEC/'
 PGD_CONSTANT = 2.5
+mvtec_labels = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'leather',
+                'metal_nut', 'pill', 'screw', 'tile', 'toothbrush', 'transistor',
+                'wood', 'zipper']
