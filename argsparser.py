@@ -29,15 +29,20 @@ def parse_args():
     parser.add_argument("--max_epochs", help='Maximum number of epochs to Continue training',
                         default=30, type=str)
 
-    parser.add_argument('--attack_type', help='Desired Attack for adversarial setting',
-                        choices=['PGD', 'FGSM'], type=str)
+    parser.add_argument('--test_attacks', help='Desired Attacks for adversarial test', nargs='+', action='extend')
 
+    parser.add_argument('--train_attack_step', help='Desired Attacks for adversarial training', default=10, type=int)
     
     parser.add_argument('--test_step', help='If given x, every x step a test would be performed',
                         default=1, type=int)
 
     parser.add_argument('--model', help='Model architecture',
-                        choices=['resnet18', 'preactresnet18', 'pretrained_resnet18', 'vit'], default='preactresnet18', type=str)
+                        choices=['resnet18', 'preactresnet18', 'pretrained_resnet18', \
+                                 'resnet34', 'preactresnet34', 'pretrained_resnet34', \
+                                 'resnet50', 'preactresnet50', 'pretrained_resnet50', \
+                                 'resnet101', 'preactresnet101', 'pretrained_resnet101', \
+                                 'resnet152', 'preactresnet152', 'pretrained_resnet152', \
+                                 'vit'], default='preactresnet18', type=str)
     
 
     return parser.parse_args()
