@@ -166,18 +166,19 @@ def download_and_extract_mvtec(path):
         so.extractall(path=os.path.join(path, "mvtec_anomaly_detection"))
 
 
-def get_exposure(dataset='cifar10', normal_dataset='cifar100', normal_class_indx = 0):
+def get_exposure(dataset='cifar10', normal_dataset='cifar100', normal_class_indx = 0, count:int = 0):
+    assert count > 0
 
     if dataset == 'cifar10':
-        return get_CIFAR10_exposure(normal_class_indx)
+        return get_CIFAR10_exposure(normal_dataset, normal_class_indx, count)
     elif dataset == 'mnist':
-        return get_MNIST_exposure(normal_class_indx)
+        return get_MNIST_exposure(normal_dataset, normal_class_indx, count)
     elif dataset == 'fashion':
-        return get_FASHION_MNIST_exposure(normal_class_indx)
+        return get_FASHION_MNIST_exposure(normal_dataset, normal_class_indx, count)
     elif dataset == 'svhn':
-        return get_SVHN_exposure(normal_class_indx)
+        return get_SVHN_exposure(normal_dataset, normal_class_indx, count)
     elif dataset == 'mvtec':
-        return get_MVTEC_exposure(normal_class_indx)
+        return get_MVTEC_exposure(normal_dataset, normal_class_indx, count)
     else:
         raise Exception("Dataset is not supported yet. ")
     
@@ -187,8 +188,6 @@ def copy_dataset(dataset, target_count):
 
 
 def get_CIFAR10_exposure(normal_dataset, normal_class_indx:int, count:int):
-    assert count > 0
-    
     exposure_train = CIFAR10(root=CIFAR10_PATH, train=True, download=True)
     exposure_test = CIFAR10(root=CIFAR10_PATH, train=False, download=True)
 
@@ -208,9 +207,7 @@ def get_CIFAR10_exposure(normal_dataset, normal_class_indx:int, count:int):
     return exposure_data
 
 
-def get_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):
-    assert count > 0
-    
+def get_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):    
     exposure_train = MNIST(root=MNIST_PATH, train=True, download=True)
     exposure_test = MNIST(root=MNIST_PATH, train=False, download=True)
 
@@ -230,9 +227,7 @@ def get_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):
     return exposure_data
 
 
-def get_FASHION_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):
-    assert count > 0
-    
+def get_FASHION_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):    
     exposure_train = FashionMNIST(root=FMNIST_PATH, train=True, download=True)
     exposure_test = FashionMNIST(root=FMNIST_PATH, train=False, download=True)
 
@@ -252,9 +247,7 @@ def get_FASHION_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int)
     return exposure_data
 
 
-def get_SVHN_exposure(normal_dataset, normal_class_indx:int, count:int):
-    assert count > 0
-    
+def get_SVHN_exposure(normal_dataset, normal_class_indx:int, count:int):    
     exposure_train = SVHN(root=SVHN_PATH, split='train', download=True)
     exposure_test = SVHN(root=SVHN_PATH, split='test', download=True)
 
@@ -298,9 +291,7 @@ class MVTecDatasetExposure(Dataset):
     
 
 
-def get_MVTEC_exposure(normal_dataset, normal_class_indx:int, count:int):
-    assert count > 0
-    
+def get_MVTEC_exposure(normal_dataset, normal_class_indx:int, count:int):    
     exposure_data = MVTecDatasetExposure(root=SVHN_PATH).data
 
     if len(exposure_data) < count:
