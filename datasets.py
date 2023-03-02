@@ -184,8 +184,11 @@ def get_exposure(dataset='cifar10', normal_dataset='cifar100', normal_class_indx
     
 
 def copy_dataset(dataset, target_count):
-    pass
 
+    while target_count > len(dataset):
+        dataset += dataset
+
+    return dataset
 
 def get_CIFAR10_exposure(normal_dataset, normal_class_indx:int, count:int):
     exposure_train = CIFAR10(root=CIFAR10_PATH, train=True, download=True)
@@ -203,6 +206,7 @@ def get_CIFAR10_exposure(normal_dataset, normal_class_indx:int, count:int):
     if len(exposure_data) < count:
         copy_dataset(exposure_data, count)
 
+    exposure_data = np.random.choice(exposure_data, size=count, replace=False).tolist()
 
     return exposure_data
 
@@ -223,6 +227,7 @@ def get_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):
     if len(exposure_data) < count:
         copy_dataset(exposure_data, count)
 
+    exposure_data = np.random.choice(exposure_data, size=count, replace=False).tolist()
 
     return exposure_data
 
@@ -243,6 +248,7 @@ def get_FASHION_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int)
     if len(exposure_data) < count:
         copy_dataset(exposure_data, count)
 
+    exposure_data = np.random.choice(exposure_data, size=count, replace=False).tolist()
 
     return exposure_data
 
@@ -263,6 +269,7 @@ def get_SVHN_exposure(normal_dataset, normal_class_indx:int, count:int):
     if len(exposure_data) < count:
         copy_dataset(exposure_data, count)
 
+    exposure_data = np.random.choice(exposure_data, size=count, replace=False).tolist()
 
     return exposure_data
 
@@ -297,4 +304,6 @@ def get_MVTEC_exposure(normal_dataset, normal_class_indx:int, count:int):
     if len(exposure_data) < count:
         copy_dataset(exposure_data, count)
 
+    exposure_data = np.random.choice(exposure_data, size=count, replace=False).tolist()
+    
     return exposure_data
