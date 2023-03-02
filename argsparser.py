@@ -14,11 +14,11 @@ def parse_args():
     parser.add_argument('--output_path', help='Path to which plots, results, etc will be recorded',
                         default='./results', type=str)
                         
-    parser.add_argument('--source_dataset_path', help='Path to source datasets, if not given, will be downloaded',
-                        default=None, type=str)
+    # parser.add_argument('--source_dataset_path', help='Path to source datasets, if not given, will be downloaded',
+    #                     default=None, type=str)
                         
-    parser.add_argument('--exposure_dataset_path', help='Path to which plots, results, etc will be recorded',
-                        default=None, type=str)
+    # parser.add_argument('--exposure_dataset_path', help='Path to which plots, results, etc will be recorded',
+    #                     default=None, type=str)
 
     parser.add_argument('--exposure_dataset', help='Target Dataset as one-class for normal',
                         choices=['cifar10', 'cifar100', 'mnist', 'fmnist', 'mvtec-ad', 'med'], type=str)
