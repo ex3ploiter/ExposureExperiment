@@ -39,7 +39,12 @@ from constants import PGD_CONSTANT
 
 args = argsparser.parse_args()
 print(args)
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+try:
+    device = torch.device(f"cuda:{args.cuda_device}" if torch.cuda.is_available() else "cpu")
+except:
+    raise ValueError('Wrong CUDA Device!')
+
+
 print(device)
 
 if args.model == 'preactresnet18':

@@ -1,5 +1,5 @@
 
-from torchvision.datasets import CIFAR10, MNIST, SVHN, FashionMNIST
+from torchvision.datasets import CIFAR10, CIFAR100, MNIST, SVHN, FashionMNIST
 import os
 import torch
 import numpy as np
@@ -7,6 +7,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 from PIL import Image
 from glob import glob
+from utills import sparse2coarse
 from constants import CIFAR10_PATH, CIFAR100_PATH, MNIST_PATH, FMNIST_PATH, SVHN_PATH, MVTEC_PATH
 
 class MyDataset_Binary(torch.utils.data.Dataset):
@@ -30,25 +31,25 @@ class MyDataset_Binary(torch.utils.data.Dataset):
         return x, y
   
 tansform_224 = transforms.Compose([
-                                      transforms.CenterCrop(224),
-                                      transforms.ToTensor()
-                                      ])
+                                    transforms.CenterCrop(224),
+                                    transforms.ToTensor()
+                                ])
 
 tansform_224_gray = transforms.Compose([
-                                 transforms.CenterCrop(224),
-                                 transforms.Grayscale(num_output_channels=3),
-                                 transforms.ToTensor()
+                                    transforms.CenterCrop(224),
+                                    transforms.Grayscale(num_output_channels=3),
+                                    transforms.ToTensor()
                                 ])
 
 tansform_32 = transforms.Compose([
-                                      transforms.CenterCrop(32),
-                                      transforms.ToTensor()
-                                      ])
+                                    transforms.CenterCrop(32),
+                                    transforms.ToTensor()
+                                ])
 
 tansform_32_gray = transforms.Compose([
-                                 transforms.CenterCrop(32),
-                                 transforms.Grayscale(num_output_channels=3),
-                                 transforms.ToTensor()
+                                    transforms.CenterCrop(32),
+                                    transforms.Grayscale(num_output_channels=3),
+                                    transforms.ToTensor()
                                 ])
 
 mvtec_labels = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'leather',
@@ -56,10 +57,16 @@ mvtec_labels = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'lea
                 'wood', 'zipper']
 
 
+####################
+#  Normal Datastes #
+####################
+
 def get_normal_class(dataset='cifar10', normal_class_indx = 0):
 
     if dataset == 'cifar10':
         return get_CIFAR10_normal(normal_class_indx)
+    elif dataset == 'cifar100':
+        return get_CIFAR100_normal(normal_class_indx)
     elif dataset == 'mnist':
         return get_MNIST_normal(normal_class_indx)
     elif dataset == 'fashion':
@@ -72,7 +79,7 @@ def get_normal_class(dataset='cifar10', normal_class_indx = 0):
         raise Exception("Dataset is not supported yet. ")
 
 
-def get_CIFAR10_normal(normal_class_indx):
+def get_CIFAR10_normal(normal_class_indx:int):
     trainset = CIFAR10(root=CIFAR10_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
@@ -82,8 +89,19 @@ def get_CIFAR10_normal(normal_class_indx):
     return trainset.data, testset
 
 
+def get_CIFAR100_normal(normal_class_indx:int):
+    trainset = CIFAR100(root=CIFAR100_PATH, train=True, download=True)
+    trainset.targets = sparse2coarse(trainset.targets)
+    trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
-def get_MNIST_normal(normal_class_indx):
+    testset = CIFAR100(root=CIFAR100_PATH, train=False, download=True)
+    testset.targets = sparse2coarse(testset.targets)
+    testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
+
+    return trainset.data, testset
+
+
+def get_MNIST_normal(normal_class_indx:int):
     trainset = MNIST(root=MNIST_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
@@ -93,7 +111,7 @@ def get_MNIST_normal(normal_class_indx):
     return trainset.data, testset
 
 
-def get_FASHION_MNIST_normal(normal_class_indx):
+def get_FASHION_MNIST_normal(normal_class_indx:int):
     trainset = FashionMNIST(root=FMNIST_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
@@ -102,7 +120,7 @@ def get_FASHION_MNIST_normal(normal_class_indx):
 
     return trainset.data, testset
 
-def get_SVHN_normal(normal_class_indx):
+def get_SVHN_normal(normal_class_indx:int):
     trainset = SVHN(root=SVHN_PATH, split='train', download=True)
     trainset.data = trainset.data[np.array(trainset.labels) == normal_class_indx]
 
@@ -112,7 +130,7 @@ def get_SVHN_normal(normal_class_indx):
     return trainset.data, testset
 
 
-class MVTecDataset(Dataset):
+class MVTecDataset(torch.utils.data.Dataset):
     def __init__(self, root, category, transform=None, target_transform=None, train=True, normal=True):
         self.transform = transform
         if train:
@@ -155,7 +173,7 @@ def get_MVTEC_normal(normal_class_indx):
     return trainset.data, testset
 
 
-def download_and_extract_mvtec(path):
+def download_and_extract_mvtec(path:str):
     import os
     import wget
     import tarfile
@@ -166,11 +184,17 @@ def download_and_extract_mvtec(path):
         so.extractall(path=os.path.join(path, "mvtec_anomaly_detection"))
 
 
-def get_exposure(dataset='cifar10', normal_dataset='cifar100', normal_class_indx = 0, count:int = 0):
+######################
+#  Exposure Datastes #
+######################
+
+def get_exposure(dataset:str='cifar10', normal_dataset:str='cifar100', normal_class_indx:int = 0, count:int = 0):
     assert count > 0
 
     if dataset == 'cifar10':
         return get_CIFAR10_exposure(normal_dataset, normal_class_indx, count)
+    elif dataset == 'cifar100':
+        return get_CIFAR100_exposure(normal_dataset, normal_class_indx, count)
     elif dataset == 'mnist':
         return get_MNIST_exposure(normal_dataset, normal_class_indx, count)
     elif dataset == 'fashion':
@@ -183,14 +207,14 @@ def get_exposure(dataset='cifar10', normal_dataset='cifar100', normal_class_indx
         raise Exception("Dataset is not supported yet. ")
     
 
-def copy_dataset(dataset, target_count):
+def copy_dataset(dataset:list | np.array , target_count:int):
 
     while target_count > len(dataset):
         dataset += dataset
 
     return dataset
 
-def get_CIFAR10_exposure(normal_dataset, normal_class_indx:int, count:int):
+def get_CIFAR10_exposure(normal_dataset:str, normal_class_indx:int, count:int):
     exposure_train = CIFAR10(root=CIFAR10_PATH, train=True, download=True)
     exposure_test = CIFAR10(root=CIFAR10_PATH, train=False, download=True)
 
@@ -210,8 +234,30 @@ def get_CIFAR10_exposure(normal_dataset, normal_class_indx:int, count:int):
 
     return exposure_data
 
+def get_CIFAR100_exposure(normal_dataset:str, normal_class_indx:int, count:int):
+    exposure_train = CIFAR100(root=CIFAR100_PATH, train=True, download=True)
+    exposure_train.targets = sparse2coarse(exposure_train.targets)
+    exposure_test = CIFAR100(root=CIFAR100_PATH, train=False, download=True)
+    exposure_test.targets = sparse2coarse(exposure_test.targets)
 
-def get_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):    
+    if normal_dataset.lower() == 'cifar100':
+        exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
+        exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
+
+    exposure_data = exposure_train.data
+
+    if len(exposure_data) < count:
+        exposure_data += exposure_test.data
+    
+    if len(exposure_data) < count:
+        copy_dataset(exposure_data, count)
+
+    exposure_data = np.random.choice(exposure_data, size=count, replace=False).tolist()
+
+    return exposure_data
+
+
+def get_MNIST_exposure(normal_dataset:str, normal_class_indx:int, count:int):    
     exposure_train = MNIST(root=MNIST_PATH, train=True, download=True)
     exposure_test = MNIST(root=MNIST_PATH, train=False, download=True)
 
@@ -232,7 +278,7 @@ def get_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):
     return exposure_data
 
 
-def get_FASHION_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int):    
+def get_FASHION_MNIST_exposure(normal_dataset:str, normal_class_indx:int, count:int):    
     exposure_train = FashionMNIST(root=FMNIST_PATH, train=True, download=True)
     exposure_test = FashionMNIST(root=FMNIST_PATH, train=False, download=True)
 
@@ -244,16 +290,108 @@ def get_FASHION_MNIST_exposure(normal_dataset, normal_class_indx:int, count:int)
 
     if len(exposure_data) < count:
         exposure_data += exposure_test.data
+    def get_CIFAR10_exposure(normal_dataset:str, normal_class_indx:int, count:int):
+    exposure_train = CIFAR10(root=CIFAR10_PATH, train=True, download=True)
+    exposure_test = CIFAR10(root=CIFAR10_PATH, train=False, download=True)
+
+    if normal_dataset.lower() == 'cifar10':
+        exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
+        exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
+
+    exposure_data = exposure_train.data.tolist()
+    del exposure_train
+
+    if len(exposure_data) < count:
+        exposure_data += exposure_test.data.tolist()
+    
+    del exposure_test
     
     if len(exposure_data) < count:
         copy_dataset(exposure_data, count)
 
-    exposure_data = np.random.choice(exposure_data, size=count, replace=False).tolist()
+    ind = np.random.choice(len(exposure_data), size=count, replace=False)
+    exposure_data =  np.array(exposure_data)[ind]
+
+    return exposure_data
+
+def get_CIFAR100_exposure(normal_dataset:str, normal_class_indx:int, count:int):
+    exposure_train = CIFAR100(root=CIFAR100_PATH, train=True, download=True)
+    exposure_train.targets = sparse2coarse(exposure_train.targets)
+    exposure_test = CIFAR100(root=CIFAR100_PATH, train=False, download=True)
+    exposure_test.targets = sparse2coarse(exposure_test.targets)
+
+    if normal_dataset.lower() == 'cifar100':
+        exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
+        exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
+
+    exposure_data = exposure_train.data.tolist()
+    del exposure_train
+
+    if len(exposure_data) < count:
+        exposure_data += exposure_test.data.tolist()
+    
+    del exposure_test
+    
+    if len(exposure_data) < count:
+        copy_dataset(exposure_data, count)
+
+    ind = np.random.choice(len(exposure_data), size=count, replace=False)
+    exposure_data =  np.array(exposure_data)[ind]
 
     return exposure_data
 
 
-def get_SVHN_exposure(normal_dataset, normal_class_indx:int, count:int):    
+def get_MNIST_exposure(normal_dataset:str, normal_class_indx:int, count:int):    
+    exposure_train = MNIST(root=MNIST_PATH, train=True, download=True)
+    exposure_test = MNIST(root=MNIST_PATH, train=False, download=True)
+
+    if normal_dataset.lower() == 'mnist':
+        exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
+        exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
+
+    exposure_data = exposure_train.data.tolist()
+    del exposure_train
+
+    if len(exposure_data) < count:
+        exposure_data += exposure_test.data.tolist()
+    
+    del exposure_test
+    
+    if len(exposure_data) < count:
+        copy_dataset(exposure_data, count)
+
+    ind = np.random.choice(len(exposure_data), size=count, replace=False)
+    exposure_data =  np.array(exposure_data)[ind]
+
+    return exposure_data
+
+
+def get_FASHION_MNIST_exposure(normal_dataset:str, normal_class_indx:int, count:int):    
+    exposure_train = FashionMNIST(root=FMNIST_PATH, train=True, download=True)
+    exposure_test = FashionMNIST(root=FMNIST_PATH, train=False, download=True)
+
+    if normal_dataset.lower() == 'fmnist':
+        exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
+        exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
+
+    exposure_data = exposure_train.data.tolist()
+    del exposure_train
+
+    if len(exposure_data) < count:
+        exposure_data += exposure_test.data.tolist()
+    
+    del exposure_test
+    
+    if len(exposure_data) < count:
+        copy_dataset(exposure_data, count)
+
+    ind = np.random.choice(len(exposure_data), size=count, replace=False)
+    exposure_data = np.array(exposure_data)[ind]
+
+    return exposure_data
+
+
+def get_SVHN_exposure(normal_dataset:str, normal_class_indx:int, count:int):    
     exposure_train = SVHN(root=SVHN_PATH, split='train', download=True)
     exposure_test = SVHN(root=SVHN_PATH, split='test', download=True)
 
@@ -261,20 +399,26 @@ def get_SVHN_exposure(normal_dataset, normal_class_indx:int, count:int):
         exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
         exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
 
-    exposure_data = exposure_train.data
+    exposure_data = exposure_train.data.tolist()
+    del exposure_train
 
     if len(exposure_data) < count:
-        exposure_data += exposure_test.data
+        exposure_data += exposure_test.data.tolist()
+    
+    del exposure_test
     
     if len(exposure_data) < count:
         copy_dataset(exposure_data, count)
 
-    exposure_data = np.random.choice(exposure_data, size=count, replace=False).tolist()
+
+    ind = np.random.choice(len(exposure_data), size=count, replace=False)
+    exposure_data =  np.array(exposure_data)[ind]
+
 
     return exposure_data
 
 
-class MVTecDatasetExposure(Dataset):
+class MVTecDatasetExposure(torch.utils.data.Dataset):
     def __init__(self, root, category=None, transform=None):
         self.transform = transform
         self.data = glob(os.path.join(root, "**", "*.png"), recursive=True)
@@ -298,12 +442,13 @@ class MVTecDatasetExposure(Dataset):
     
 
 
-def get_MVTEC_exposure(normal_dataset, normal_class_indx:int, count:int):    
-    exposure_data = MVTecDatasetExposure(root=SVHN_PATH).data
+def get_MVTEC_exposure(normal_dataset:str, normal_class_indx:int, count:int):    
+    exposure_data = MVTecDatasetExposure(root=SVHN_PATH).data.tolist()
 
     if len(exposure_data) < count:
         copy_dataset(exposure_data, count)
 
-    exposure_data = np.random.choice(exposure_data, size=count, replace=False).tolist()
-    
+    ind = np.random.choice(len(exposure_data), size=count, replace=False)
+    exposure_data =  np.array(exposure_data)[ind]
+
     return exposure_data

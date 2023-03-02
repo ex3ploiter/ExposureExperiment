@@ -35,6 +35,9 @@ def parse_args():
     
     parser.add_argument('--test_step', help='If given x, every x step a test would be performed',
                         default=1, type=int)
+    
+    parser.add_argument('--cuda_device', help='The number of CUDA device',
+                        default=0, type=int)
 
     parser.add_argument('--model', help='Model architecture',
                         choices=['resnet18', 'preactresnet18', 'pretrained_resnet18', \

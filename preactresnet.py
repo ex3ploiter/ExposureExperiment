@@ -12,7 +12,7 @@ class PreActBlock(nn.Module):
     '''Pre-activation version of the BasicBlock.'''
     expansion = 1
 
-    def __init__(self, in_planes, planes, stride=1):
+    def __init__(self, in_planes, planes, stride:int=1):
         super(PreActBlock, self).__init__()
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
@@ -37,7 +37,7 @@ class PreActBottleneck(nn.Module):
     '''Pre-activation version of the original Bottleneck module.'''
     expansion = 4
 
-    def __init__(self, in_planes, planes, stride=1):
+    def __init__(self, in_planes, planes, stride:int=1):
         super(PreActBottleneck, self).__init__()
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
@@ -62,7 +62,7 @@ class PreActBottleneck(nn.Module):
 
 
 class PreActResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks, num_classes:int=2):
         super(PreActResNet, self).__init__()
         self.in_planes = 64
 
@@ -95,8 +95,8 @@ class PreActResNet(nn.Module):
         return out
 
 
-def PreActResNet18(num_classes=10):
-    return PreActResNet(PreActBlock, [2,2,2,2], num_classes=num_classes)
+def PreActResNet18():
+    return PreActResNet(PreActBlock, [2,2,2,2])
 
 def PreActResNet34():
     return PreActResNet(PreActBlock, [3,4,6,3])
