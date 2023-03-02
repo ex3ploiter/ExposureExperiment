@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 from PIL import Image
 from glob import glob
-
+from constants import CIFAR10_PATH, CIFAR100_PATH, MNIST_PATH, FMNIST_PATH, SVHN_PATH, MVTEC_PATH
 
 class MyDataset_Binary(torch.utils.data.Dataset):
   'Characterizes a dataset for PyTorch'
@@ -56,67 +56,57 @@ mvtec_labels = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'lea
                 'wood', 'zipper']
 
 
-def get_normal_class(dataset='cifar', path='~/mydataset', normal_class_indx = 0, batch_size=8, img_size=32):
-
-    assert img_size == 32 or img_size == 224
+def get_normal_class(dataset='cifar10', normal_class_indx = 0):
 
     if dataset == 'cifar10':
-        return get_CIFAR10_normal(normal_class_indx, batch_size, path, img_size)
+        return get_CIFAR10_normal(normal_class_indx)
     elif dataset == 'mnist':
-        return get_MNIST_normal(normal_class_indx, batch_size, path, img_size)
+        return get_MNIST_normal(normal_class_indx)
     elif dataset == 'fashion':
-        return get_FASHION_MNIST_normal(normal_class_indx, batch_size, path, img_size)
+        return get_FASHION_MNIST_normal(normal_class_indx)
     elif dataset == 'svhn':
-        return get_SVHN_normal(normal_class_indx, batch_size, path, img_size)
+        return get_SVHN_normal(normal_class_indx)
     elif dataset == 'mvtec':
-        return get_MVTEC(normal_class_indx, batch_size, path, img_size)
+        return get_MVTEC(normal_class_indx)
     else:
         raise Exception("Dataset is not supported yet. ")
 
 
-def get_CIFAR10_normal(normal_class_indx, batch_size, path, img_size):
-    tansform_dataset = tansform_224 if img_size==224 else tansform_32
-
-    trainset = CIFAR10(root=path, train=True, download=True, transform=tansform_dataset)
+def get_CIFAR10_normal(normal_class_indx):
+    trainset = CIFAR10(root=CIFAR10_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
-    testset = CIFAR10(root=path, train=False, download=True, transform=tansform_dataset)
+    testset = CIFAR10(root=CIFAR10_PATH, train=False, download=True)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
 
     return trainset.data, testset
 
 
 
-def get_MNIST_normal(normal_class_indx, batch_size, path, img_size):
-    tansform_dataset = tansform_224_gray if img_size==224 else tansform_32_gray
-
-    trainset = MNIST(root=path, train=True, download=True, transform=tansform_dataset)
+def get_MNIST_normal(normal_class_indx):
+    trainset = MNIST(root=MNIST_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
-    testset = MNIST(root=path, train=False, download=True, transform=tansform_dataset)
+    testset = MNIST(root=MNIST_PATH, train=False, download=True)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
 
     return trainset.data, testset
 
 
-def get_FASHION_MNIST_normal(normal_class_indx, batch_size, path, img_size):
-    tansform_dataset = tansform_224_gray if img_size==224 else tansform_32_gray
-
-    trainset = FashionMNIST(root=path, train=True, download=True)
+def get_FASHION_MNIST_normal(normal_class_indx):
+    trainset = FashionMNIST(root=FMNIST_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
 
-    testset = FashionMNIST(root=path, train=False, download=True)
+    testset = FashionMNIST(root=FMNIST_PATH, train=False, download=True)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
 
     return trainset.data, testset
 
-def get_SVHN_normal(normal_class_indx, batch_size, path, img_size):
-    tansform_dataset = tansform_224 if img_size==224 else tansform_32
-
-    trainset = SVHN(root=path, split='train', download=True,)
+def get_SVHN_normal(normal_class_indx):
+    trainset = SVHN(root=SVHN_PATH, split='train', download=True)
     trainset.data = trainset.data[np.array(trainset.labels) == normal_class_indx]
 
-    testset = SVHN(root=path, split='test', download=True)
+    testset = SVHN(root=SVHN_PATH, split='test', download=True)
     testset.labels  = [int(t!=normal_class_indx) for t in testset.labels]
 
     return trainset.data, testset
@@ -156,11 +146,11 @@ class MVTecDataset(Dataset):
         return len(self.image_files)
 
 
-def get_MVTEC(normal_class_indx, batch_size, path):
+def get_MVTEC(normal_class_indx):
     normal_class = mvtec_labels[normal_class_indx]
 
-    trainset = MVTecDataset(path, normal_class, train=True)
-    testset = MVTecDataset(path, normal_class, train=False)
+    trainset = MVTecDataset(MVTEC_PATH, normal_class, train=True)
+    testset = MVTecDataset(MVTEC_PATH, normal_class, train=False)
 
     return trainset[:, 0], testset
 
