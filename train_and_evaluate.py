@@ -1,6 +1,6 @@
 import argsparser
 from torch import optim
-from tests import auc_softmax, auc_softmax_adversarial
+from utills import auc_softmax, auc_softmax_adversarial
 
 from tqdm import tqdm
 from torchattacks import FGSM, PGD
