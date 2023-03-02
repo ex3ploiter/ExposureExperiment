@@ -5,7 +5,7 @@ import torch.optim as optim
 import preactresnet
 
 class FeatureExtractor(nn.Module):
-  def __init__(self, model=18, pretrained=True):
+  def __init__(self, model:int=18, pretrained:bool=True):
     super(FeatureExtractor, self).__init__()
 
     # Load a pretrained resnet model from torchvision.models in Pytorch
