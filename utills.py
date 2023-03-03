@@ -2,6 +2,8 @@ from sklearn.metrics import roc_auc_score, accuracy_score
 import numpy as np
 import torch
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import torch.nn.functional as F
 
 def auc_softmax_adversarial(model, test_loader, test_attack, epoch:int, device):
 
@@ -139,7 +141,6 @@ def get_visualization_batch(dataloader, n):
   
   iterator = iter(dataloader)
   images_batch, labels_batch = next(iterator)
-  print(labels_batch)
   while True:
     if labels_batch.sum().item() > n and (1 - labels_batch).sum().item() > n:
       break
@@ -152,3 +153,48 @@ def get_visualization_batch(dataloader, n):
   abnormal_batch = images_batch[labels_batch==1][:n]
 
   return normal_batch, abnormal_batch
+
+
+def get_attack_name(attack):
+    attack_type = str(attack.__class__)[1:-2].split('.')[-1]
+    attack_str = f'{attack_type} EPS={attack.eps:0.3f}'
+    if attack_type.lower() == 'fgsm':
+        return attack_str
+    attack_str += f' ALPHA={attack.alpha:0.3f} STEPS={attack.steps}'
+    return attack_str
+
+def visualize(img_batch, labels, attack):
+    fig = plt.figure(constrained_layout=True, figsize=(20, 17))
+    
+    fig.suptitle(get_attack_name(attack), size=32)
+
+    subfigs = fig.subfigures(nrows=3, ncols=1)
+
+    adv_batch = attack(img_batch, labels)
+    noise_batch =  adv_batch - img_batch
+    noise_batch = (noise_batch - torch.min(noise_batch))/(torch.max(noise_batch) - torch.min(noise_batch))
+
+    batchs = [img_batch, adv_batch, noise_batch]
+    titles = ['Clean', 'Purturbed', 'Normalized Noise']
+
+    for subfig, batch, title in zip(subfigs, batchs, titles):
+        subfig.suptitle(title, size=23)
+
+        axs = subfig.subplots(nrows=1, ncols=2)
+        
+        batch_shape = batch.shape[0]
+        normal_images, adversarial_images = batch[:batch_shape//2], batch[batch_shape//2:]
+
+        axs[0].plot()
+        img = F.to_pil_image(normal_images)
+        axs[0].imshow(np.array(img))
+        axs[0].grid(False)
+        axs[0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+
+        axs[1].plot()
+        img = F.to_pil_image(adversarial_images)
+        axs[1].imshow(np.array(img))
+        axs[1].grid(False)
+        axs[1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+    
+    return fig
