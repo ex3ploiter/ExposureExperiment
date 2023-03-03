@@ -111,7 +111,7 @@ def get_normal_class(dataset='cifar10', normal_class_indx = 0,  transform=None):
 def get_CIFAR10_normal(normal_class_indx:int, transform):
     trainset = CIFAR10(root=CIFAR10_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
-    print('CIFAR-10', trainset.data.shape)
+
     testset = CIFAR10(root=CIFAR10_PATH, train=False, download=True, transform=transform)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
 
@@ -122,7 +122,7 @@ def get_CIFAR100_normal(normal_class_indx:int, transform):
     trainset = CIFAR100(root=CIFAR100_PATH, train=True, download=True)
     trainset.targets = sparse2coarse(trainset.targets)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
-    print('CIFAR-100', trainset.data.shape)
+
     testset = CIFAR100(root=CIFAR100_PATH, train=False, download=True, transform=transform)
     testset.targets = sparse2coarse(testset.targets)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
@@ -133,7 +133,7 @@ def get_CIFAR100_normal(normal_class_indx:int, transform):
 def get_MNIST_normal(normal_class_indx:int, transform):
     trainset = MNIST(root=MNIST_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
-    print('MNIST', trainset.data.shape)
+
     testset = MNIST(root=MNIST_PATH, train=False, download=True, transform=transform)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
 
@@ -143,7 +143,7 @@ def get_MNIST_normal(normal_class_indx:int, transform):
 def get_FASHION_MNIST_normal(normal_class_indx:int, transform):
     trainset = FashionMNIST(root=FMNIST_PATH, train=True, download=True)
     trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
-    print('Fashion', trainset.data.shape)
+
     testset = FashionMNIST(root=FMNIST_PATH, train=False, download=True, transform=transform)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
 
@@ -152,7 +152,7 @@ def get_FASHION_MNIST_normal(normal_class_indx:int, transform):
 def get_SVHN_normal(normal_class_indx:int, transform):
     trainset = SVHN(root=SVHN_PATH, split='train', download=True)
     trainset.data = trainset.data[np.array(trainset.labels) == normal_class_indx].transpose(0, 2, 3, 1)
-    print('SVHN', trainset.data.shape)
+
     testset = SVHN(root=SVHN_PATH, split='test', download=True, transform=transform)
     testset.labels  = [int(t!=normal_class_indx) for t in testset.labels]
 
@@ -375,27 +375,16 @@ class MVTecDatasetExposure(torch.utils.data.Dataset):
           self.data = list(set(self.data) - set(class_files))
 
         self.data.sort(key=lambda y: y.lower())
-        self.data = [Image.open(x).convert('RGB') for x in self.data]
-
-    def __getitem__(self, index):
-        image_file = self.data[index]
-        if self.transform is not None:
-            image = self.transform(image)
-
-        return image
-
-    def __len__(self):
-        return len(self.data)
-    
+        self.data = np.array([np.array(Image.open(x).convert('RGB')) for x in self.data])
 
 
 def get_MVTEC_exposure(normal_dataset:str, normal_class_indx:int, count:int):    
-    exposure_data = torch.Tensor(MVTecDatasetExposure(root=MVTEC_PATH).data())
+    exposure_data = torch.Tensor(MVTecDatasetExposure(root=MVTEC_PATH).data)
 
-    if len(exposure_data) < count:
+    if exposure_data.size(0) < count:
         copy_dataset(exposure_data, count)
 
     indices = torch.randperm(exposure_data.size(0))[:count]
     exposure_data =  exposure_data[indices]
 
-    return exposure_data
+    return [F.to_tensor(np.array(x).astype(np.uint8)) for x  in exposure_data]
