@@ -1,4 +1,5 @@
 from ast import arg
+from asyncore import write
 from distutils.command.config import config
 import argsparser
 import torch
@@ -6,7 +7,7 @@ import torch.nn as nn
 from torch import optim
 from torchvision.utils import save_image
 from torchvision.utils import make_grid
-from utills import auc_softmax, auc_softmax_adversarial, save_model_checkpoint, load_model_checkpoint, lr_schedule
+from utills import auc_softmax, auc_softmax_adversarial, save_model_checkpoint, load_model_checkpoint, lr_schedule, get_visualization_batch, visualize, get_attack_name
 from tqdm import tqdm
 from torchattacks import FGSM, PGD
 from models import Net
@@ -28,6 +29,9 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
     if checkpoint is not None:
         model, optimizer, init_epoch, loss = checkpoint
 
+    vis_batch_train = get_visualization_batch(dataloader=trainloader, n=50)
+    vis_batch_test = get_visualization_batch(dataloader=testloader, n=50)
+
     for epoch in range(init_epoch, max_epochs+1):
 
         torch.cuda.empty_cache()
@@ -47,7 +51,11 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
                 writer.add_scalars('AUC-Test', test_auc, epoch)
                 writer.add_scalars('Accuracy-Test', test_accuracy, epoch)
                 writer.flush()
-                writer.close()
+
+                for attack_name, attack in test_attacks.items():
+                    writer.add_figures(f'Sample Peturbations Train {get_attack_name(attack)}', visualize(vis_batch_train[0], vis_batch_train[1], attack), epoch)
+                    writer.add_figures(f'Sample Peturbations Test {get_attack_name(attack)}', visualize(vis_batch_test[0], vis_batch_test[1], attack), epoch)
+                    writer.flush()
 
         torch.cuda.empty_cache()
 
@@ -65,7 +73,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
         writer.add_scalar('Accuracy-Train', train_accuracy, epoch)
         writer.add_scalar('Accuracy-Loss', train_loss, epoch)
         writer.flush()
-        writer.close()
+        
 
         if train_loss < loss_threshold:
             save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint, optimizer=optimizer)
@@ -74,6 +82,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
         if epoch > 0 and epoch % save_step == 0:
             save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint, optimizer=optimizer)
 
+    writer.close()
 
 def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader, train_attack, lr, device): 
 

@@ -4,6 +4,7 @@ import torch
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
+from torchvision.utils import make_grid
 
 def auc_softmax_adversarial(model, test_loader, test_attack, epoch:int, device):
 
@@ -152,7 +153,7 @@ def get_visualization_batch(dataloader, n):
   normal_batch = images_batch[labels_batch==0][:n]
   abnormal_batch = images_batch[labels_batch==1][:n]
 
-  return normal_batch, abnormal_batch
+  return torch.cat((normal_batch, abnormal_batch),dim=0), torch.tensor([0] * n + [1] * n)
 
 
 def get_attack_name(attack):
@@ -163,8 +164,11 @@ def get_attack_name(attack):
     attack_str += f' ALPHA={attack.alpha:0.3f} STEPS={attack.steps}'
     return attack_str
 
-def visualize(img_batch, labels, attack):
-    fig = plt.figure(constrained_layout=True, figsize=(20, 17))
+def visualize(img_batch, labels, attack, nrow=10):
+
+    ncols = img_batch.shape[0] // nrow
+
+    fig = plt.figure(constrained_layout=True, figsize=(20, ncols * 15 + 2))
     
     fig.suptitle(get_attack_name(attack), size=32)
 
@@ -186,13 +190,13 @@ def visualize(img_batch, labels, attack):
         normal_images, adversarial_images = batch[:batch_shape//2], batch[batch_shape//2:]
 
         axs[0].plot()
-        img = F.to_pil_image(normal_images)
+        img = F.to_pil_image(make_grid(normal_images, nrow=nrow))
         axs[0].imshow(np.array(img))
         axs[0].grid(False)
         axs[0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
 
         axs[1].plot()
-        img = F.to_pil_image(adversarial_images)
+        img = F.to_pil_image(make_grid(adversarial_images, nrow=nrow))
         axs[1].imshow(np.array(img))
         axs[1].grid(False)
         axs[1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
