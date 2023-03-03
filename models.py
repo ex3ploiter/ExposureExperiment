@@ -5,21 +5,21 @@ import torch.optim as optim
 import preactresnet
 
 class Net(nn.Module):
-  def __init__(self, model:int=18, pretrained:bool=True):
+  def __init__(self, model:str='preactresnet18', pretrained:bool=True):
     super(Net, self).__init__()
 
     # Load a pretrained resnet model from torchvision.models in Pytorch
     self.model = None
     
-    if model == 18:
+    if model == 'preactresnet18':
         self.model = preactresnet.PreActResNet18()
-    elif model == 34:
+    elif model == 'preactresnet34':
         self.model = preactresnet.PreActResNet34()
-    elif model == 50:
+    elif model == 'preactresnet50':
         self.model = preactresnet.PreActResNet50()
-    elif model == 101:
+    elif model == 'preactresnet101':
         self.model = preactresnet.PreActResNet101()
-    elif model == 152:
+    elif model == 'preactresnet152':
         self.model = preactresnet.PreActResNet152()
     else:
         raise ValueError('Invalid Model Type!')

@@ -6,16 +6,16 @@ def parse_args():
     parser = ArgumentParser(description='Outlier Exposure Experiments Automation')
 
     parser.add_argument('--source_dataset', help='Target Dataset as one-class for normal',
-                        choices=['cifar10', 'cifar100', 'mnist', 'fmnist', 'mvtec-ad', 'med'], type=str)
+                        choices=['cifar10', 'cifar100', 'mnist', 'fashion', 'mvtec-ad', 'med'], type=str)
 
     parser.add_argument('--source_class', help='Index of Normal Class',
                         default=None, type=int)
 
     parser.add_argument('--output_path', help='Path to which plots, results, etc will be recorded',
-                        default='./results', type=str)
+                        default='./results/', type=str)
 
     parser.add_argument('--exposure_dataset', help='Target Dataset as one-class for normal',
-                        choices=['cifar10', 'cifar100', 'mnist', 'fmnist', 'mvtec-ad', 'med'], type=str)
+                        choices=['cifar10', 'cifar100', 'mnist', 'fashion', 'mvtec-ad', 'med'], type=str)
 
     parser.add_argument("--checkpoints_path", help='Path to save the checkpoint of trained model', default='./Model-Checkpoints/', type=str)
 
@@ -29,7 +29,11 @@ def parse_args():
     
     parser.add_argument('--test_step', help='If given x, every x step a test would be performed', default=1, type=int)
     
+    parser.add_argument('--save_step', help='If given x, every x step saves a model checkpoint', default=1, type=int)
+
     parser.add_argument('--cuda_device', help='The number of CUDA device', default=0, type=int)
+
+    parser.add_argument('--loss_threshold', help='The loss threshold which stops training', default=0.001, type=float)
 
     parser.add_argument('--model', help='Model architecture',
                         choices=['resnet18', 'preactresnet18', 'pretrained_resnet18', \

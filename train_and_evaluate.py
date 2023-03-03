@@ -18,7 +18,7 @@ from datasets import get_dataloader
 import os
 
 
-def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloader, writer, test_step, save_step, max_epochs, loss_threshold=1e-3):
+def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloader, writer, test_step, save_step, max_epochs, device, loss_threshold=1e-3):
 
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
     criterion = nn.CrossEntropyLoss()
@@ -136,18 +136,6 @@ def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader,
 
             tepoch.set_postfix(loss=running_loss / len(preds), accuracy=100. * accuracy)
 
-    # sample_batch = [first_batch_imgs]
-    # attack_names = []
-
-    # for attack_name, attack_module in test_attacks.items():
-    #     attack_names.append(attack_name)
-    #     sample_batch.append(attack_module(first_batch_imgs, first_batch_labels))
-
-    # writer.add_images(tag='DICk', img_tensor=torch.cat(sample_batch))
-    # # writer.add_scalars
-    # results["Train Accuracy"].append(100. * accuracy)
-    # results["Loss"].append(running_loss / len(preds))
-
     return  roc_auc_score(true_labels, anomaly_scores) , \
             accuracy_score(true_labels, preds, normalize=True), \
             running_loss / len(preds)
@@ -257,4 +245,25 @@ checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 #  init tensorboard writer #
 ############################
 
+writer_dir = os.path.join(args.output_path, f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_class]}', f'exposure-{args.exposure_dataset}')
 writer = SummaryWriter('runs/fashion_mnist_experiment_1')
+
+
+##################################
+#               RUN              #
+##################################
+
+
+run(model=model,\
+    checkpoint_path=checkpoint_path,\
+    train_attack=train_attack,\
+    test_attacks=test_attacks,\
+    trainloader=trainloader,\
+    testloader=testloader,\
+    writer=writer,\
+    test_step=args.test_step,\
+    save_step=args.save_step,\
+    max_epochs=args.max_epochs,\
+    device=device\
+    loss_threshold=args.loss_threshold\
+    )
