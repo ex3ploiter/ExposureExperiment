@@ -9,7 +9,7 @@ from torchvision.utils import save_image
 from torchvision.utils import make_grid
 from utills import auc_softmax, auc_softmax_adversarial, save_model_checkpoint, load_model_checkpoint, lr_schedule, get_visualization_batch, visualize, get_attack_name
 from tqdm import tqdm
-from torchattacks import FGSM, PGD, VANILLA
+from torchattacks import FGSM, PGD, VANILA
 from models import Net
 from constants import PGD_CONSTANT, dataset_labels
 from sklearn.metrics import roc_auc_score, accuracy_score
@@ -220,7 +220,7 @@ for test_attack in args.test_attacks:
 
 train_steps = args.train_attack_step
 train_alpha = (PGD_CONSTANT * attack_eps) / train_steps
-train_attack = PGD(model, eps=attack_eps, alpha=train_alpha, steps=train_steps) if not args.clean else VANILLA(model)
+train_attack = PGD(model, eps=attack_eps, alpha=train_alpha, steps=train_steps) if not args.clean else VANILA(model)
 
 
 ################

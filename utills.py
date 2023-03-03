@@ -158,7 +158,7 @@ def get_visualization_batch(dataloader, n):
 
 def get_attack_name(attack):
     attack_type = str(attack.__class__)[1:-2].split('.')[-1]
-    if attack_type.lower() == 'vanilla':
+    if attack_type.lower() == 'vanila':
         return attack_type
     
     attack_str = f'{attack_type} EPS={attack.eps:0.3f}'
