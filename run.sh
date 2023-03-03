@@ -27,7 +27,7 @@ CUDA_DEVICE=0
 LOSS_THRESHOLD=0.0001
 
 # Define model architecture(s) to use
-MODEL_ARCHITECTURE=("preactresnet18") # can also add "preactresnet34" "preactresnet50" "preactresnet101" "preactresnet152"
+MODEL_ARCHITECTURE="preactresnet18" # can also add "preactresnet34" "preactresnet50" "preactresnet101" "preactresnet152"
 
 for SOURCE_DATASET in "${DATASETS[@]}"
 do
@@ -43,8 +43,8 @@ do
     do
       for CLEAN_FLAG in "${CLEAN_FLAGS[@]}"
       do
-        echo "Running with params: source_dataset=$SOURCE_DATASET, source_class=$CLASS, exposure_dataset=$EXPOSURE_DATASET, test_attacks=${TEST_ATTACKS[@]}, batch_size=$BATCH_SIZE, max_epochs=$MAX_EPOCHS, clean_flag=$CLEAN_FLAG, train_attack_step=$TRAIN_ATTACK_STEP, test_step=$TEST_STEP, save_step=$SAVE_STEP, cuda_device=$CUDA_DEVICE, loss_threshold=$LOSS_THRESHOLD, model=$MODEL"
-        python train_and_evaluate.py --source_dataset $SOURCE_DATASET --source_class $CLASS --exposure_dataset $EXPOSURE_DATASET --test_attacks ${TEST_ATTACKS[@]} --batch_size $BATCH_SIZE --max_epochs $MAX_EPOCHS --train_attack_step $TRAIN_ATTACK_STEP --test_step $TEST_STEP --save_step $SAVE_STEP --cuda_device $CUDA_DEVICE --loss_threshold $LOSS_THRESHOLD --model $MODEL $CLEAN_FLAG
+        echo "Running with params: source_dataset=$SOURCE_DATASET, source_class=$CLASS, exposure_dataset=$EXPOSURE_DATASET, test_attacks=${TEST_ATTACKS[@]}, batch_size=$BATCH_SIZE, max_epochs=$MAX_EPOCHS, clean_flag=$CLEAN_FLAG, train_attack_step=$TRAIN_ATTACK_STEP, test_step=$TEST_STEP, save_step=$SAVE_STEP, cuda_device=$CUDA_DEVICE, loss_threshold=$LOSS_THRESHOLD, model=$MODEL_ARCHITECTURE"
+        python train_and_evaluate.py --source_dataset $SOURCE_DATASET --source_class $CLASS --exposure_dataset $EXPOSURE_DATASET --test_attacks ${TEST_ATTACKS[@]} --batch_size $BATCH_SIZE --max_epochs $MAX_EPOCHS --train_attack_step $TRAIN_ATTACK_STEP --test_step $TEST_STEP --save_step $SAVE_STEP --cuda_device $CUDA_DEVICE --loss_threshold $LOSS_THRESHOLD --model $MODEL_ARCHITECTURE $CLEAN_FLAG
       done
     done
   done
