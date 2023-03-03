@@ -10,10 +10,11 @@ from utills import auc_softmax, auc_softmax_adversarial, save_model_checkpoint, 
 from tqdm import tqdm
 from torchattacks import FGSM, PGD
 from models import Net
-from constants import PGD_CONSTANT
+from constants import PGD_CONSTANT, dataset_labels
 from sklearn.metrics import roc_auc_score, accuracy_score
 from torch.utils.tensorboard.writer import SummaryWriter
 from datasets import get_dataloader
+import os
 
 
 def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloader, writer, test_step, save_step, max_epochs, loss_threshold=1e-3):
@@ -227,4 +228,16 @@ train_attack = PGD(model, eps=attack_eps, alpha=train_alpha, steps=train_steps)
 ################
 
 trainloader, testloader = get_dataloader(normal_dataset=args.source_dataset, normal_class_indx=args.source_class, exposure_dataset=args.exposure_dataset, batch_size=args.batch_size)
+
+#########################
+#  init checkpoint path #
+#########################
+
+checkpoint_dir = os.path.join(args.checkpoints_path, f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_class]}', f'exposure-{args.exposure_dataset}')
+checkpoint_name = f'{args.source_dataset}-{args.source_class:02d}--{args.exposure_dataset}.pt'
+
+if not os.path.exists(checkpoint_dir):
+    os.makedirs(checkpoint_dir)
+
+checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 
