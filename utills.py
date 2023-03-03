@@ -1,48 +1,87 @@
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, accuracy_score
 import numpy as np
 import torch
 from tqdm import tqdm
 
 def auc_softmax_adversarial(model, test_loader, test_attack, epoch:int, device):
+
+    is_train = model.training
+    model.eval()
+
     soft = torch.nn.Softmax(dim=1)
     anomaly_scores = []
+    preds = []
     test_labels = []
-    print('AUC Adversarial Softmax Started ...')
+
+    print('AUC & Accuracy Adversarial Softmax Started ...')
+
     with tqdm(test_loader, unit="batch") as tepoch:
         torch.cuda.empty_cache()
         for i, (data, target) in enumerate(tepoch):
             data, target = data.to(device), target.to(device)
-            labels = target.to(device)
+
             adv_data = test_attack(data, target)
             output = model(adv_data)
+            
+            predictions = output.argmax(dim=1, keepdim=True).squeeze()
+            preds += predictions.detach().cpu().numpy().tolist()
+
             probs = soft(output).squeeze()
             anomaly_scores += probs[:, 1].detach().cpu().numpy().tolist()
+
             test_labels += target.detach().cpu().numpy().tolist()
 
     auc = roc_auc_score(test_labels, anomaly_scores)
+    accuracy = accuracy_score(test_labels, preds, normalize=True)
+
     print(f'AUC Adversairal - Softmax - score on epoch {epoch} is: {auc * 100}')
+    print(f'Accuracy Adversairal - Softmax - score on epoch {epoch} is: {accuracy * 100}')
+
+    if is_train:
+        model.train()
+    else:
+        model.eval()
+
     return auc
 
 def auc_softmax(model, test_loader, epoch:int, device):
+
+    is_train = model.training
     model.eval()
+
     soft = torch.nn.Softmax(dim=1)
     anomaly_scores = []
+    preds = []
     test_labels = []
-    print('AUC Softmax Started ...')
+
+    print('AUC & Accuracy Softmax Started ...')
     with torch.no_grad():
         with tqdm(test_loader, unit="batch") as tepoch:
             torch.cuda.empty_cache()
             for i, (data, target) in enumerate(tepoch):
                 data, target = data.to(device), target.to(device)
                 output = model(data)
+
+                predictions = output.argmax(dim=1, keepdim=True).squeeze()
+                preds += predictions.detach().cpu().numpy().tolist()
+
                 probs = soft(output).squeeze()
                 anomaly_scores += probs[:, 1].detach().cpu().numpy().tolist()
+
                 test_labels += target.detach().cpu().numpy().tolist()
 
     auc = roc_auc_score(test_labels, anomaly_scores)
-    print(f'AUC - Softmax - score on epoch {epoch} is: {auc * 100}')
+    accuracy = accuracy_score(test_labels, preds, normalize=True)
 
-    return auc 
+    print(f'AUC - Softmax - score on epoch {epoch} is: {auc * 100}')
+    print(f'Accuracy - Softmax - score on epoch {epoch} is: {accuracy * 100}')
+
+    if is_train:
+        model.train()
+    else:
+        model.eval()
+
+    return auc, accuracy
 
 def save_model_checkpoint(model, epoch, loss, path, optimizer):
     try:
@@ -53,7 +92,7 @@ def save_model_checkpoint(model, epoch, loss, path, optimizer):
                 'loss': loss,
         }, path)
     except:
-        raise ValueError('Loading model from checkpoint failed!')
+        raise ValueError('Saving model checkpoint failed!')
     
 
 def load_model_checkpoint(model, optimizer, path):
