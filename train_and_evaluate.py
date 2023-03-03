@@ -76,11 +76,11 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
         
 
         if train_loss < loss_threshold:
-            save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint, optimizer=optimizer)
+            save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint_path, optimizer=optimizer)
             break
         
         if epoch > 0 and epoch % save_step == 0:
-            save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint, optimizer=optimizer)
+            save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint_path, optimizer=optimizer)
 
     writer.close()
 
@@ -99,8 +99,7 @@ def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader,
         torch.cuda.empty_cache()
         for i, (data, target) in enumerate(tepoch):
             tepoch.set_description(f"Epoch {epoch + 1}/{max_epochs}")
-
-            updated_lr = lr_schedule(learning_rate=lr, t=epoch + (i + 1) / len(list(tepoch)), max_epochs=max_epochs) 
+            updated_lr = lr_schedule(learning_rate=lr, t=epoch + (i + 1) / len(tepoch), max_epochs=max_epochs) 
             optimizer.param_groups[0].update(lr=updated_lr)
             
             data, target = data.to(device), target.to(device)
@@ -136,6 +135,7 @@ def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader,
 
             tepoch.set_postfix(loss=running_loss / len(preds), accuracy=100. * accuracy)
 
+    print('KIR')
     return  roc_auc_score(true_labels, anomaly_scores) , \
             accuracy_score(true_labels, preds, normalize=True), \
             running_loss / len(preds)
@@ -246,7 +246,7 @@ checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 ############################
 
 writer_dir = os.path.join(args.output_path, f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
-writer = SummaryWriter('runs/fashion_mnist_experiment_1')
+writer = SummaryWriter(writer_dir)
 
 
 ##################################
