@@ -13,31 +13,23 @@ def parse_args():
 
     parser.add_argument('--output_path', help='Path to which plots, results, etc will be recorded',
                         default='./results', type=str)
-                        
-    # parser.add_argument('--source_dataset_path', help='Path to source datasets, if not given, will be downloaded',
-    #                     default=None, type=str)
-                        
-    # parser.add_argument('--exposure_dataset_path', help='Path to which plots, results, etc will be recorded',
-    #                     default=None, type=str)
 
     parser.add_argument('--exposure_dataset', help='Target Dataset as one-class for normal',
                         choices=['cifar10', 'cifar100', 'mnist', 'fmnist', 'mvtec-ad', 'med'], type=str)
 
-    parser.add_argument("--checkpoints_path", help='Path to save the checkpoint of trained model',
-                        default=None, type=str)
+    parser.add_argument("--checkpoints_path", help='Path to save the checkpoint of trained model', default='./Model-Checkpoints/', type=str)
 
-    parser.add_argument("--max_epochs", help='Maximum number of epochs to Continue training',
-                        default=30, type=str)
+    parser.add_argument("--max_epochs", help='Maximum number of epochs to Continue training', default=30, type=str)
+    
+    parser.add_argument('--attack_eps', type=str, default='8/255',  help='Attack eps used for both training and testing',)
 
     parser.add_argument('--test_attacks', help='Desired Attacks for adversarial test', nargs='+', action='extend')
 
     parser.add_argument('--train_attack_step', help='Desired Attacks for adversarial training', default=10, type=int)
     
-    parser.add_argument('--test_step', help='If given x, every x step a test would be performed',
-                        default=1, type=int)
+    parser.add_argument('--test_step', help='If given x, every x step a test would be performed', default=1, type=int)
     
-    parser.add_argument('--cuda_device', help='The number of CUDA device',
-                        default=0, type=int)
+    parser.add_argument('--cuda_device', help='The number of CUDA device', default=0, type=int)
 
     parser.add_argument('--model', help='Model architecture',
                         choices=['resnet18', 'preactresnet18', 'pretrained_resnet18', \

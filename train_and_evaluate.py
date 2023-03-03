@@ -1,3 +1,4 @@
+from ast import arg
 from distutils.command.config import config
 import argsparser
 import torch
@@ -11,7 +12,8 @@ from torchattacks import FGSM, PGD
 from models import Net
 from constants import PGD_CONSTANT
 from sklearn.metrics import roc_auc_score, accuracy_score
-
+from torch.utils.tensorboard.writer import SummaryWriter
+from datasets import get_dataloader
 
 
 def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloader, writer, test_step, save_step, max_epochs, loss_threshold=1e-3):
@@ -139,8 +141,19 @@ def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader,
             running_loss / len(preds)
 
 
+##################
+#  Parsing Args  #
+##################
+
 args = argsparser.parse_args()
 print(args)
+
+
+################
+#  Set Device  #
+################
+
+device = None
 
 try:
     device = torch.device(f"cuda:{args.cuda_device}" if torch.cuda.is_available() else "cpu")
@@ -150,38 +163,68 @@ except:
 
 print(device)
 
-if args.model == 'preactresnet18':
-    
-    model = Net().to(device)
+####################
+#  Model Selection #
+####################
+
+model = None
+
+try:
+    model = Net(args.model).to(device)
+except Exception as err:
+    raise err
+
+print(args.args.model)
+
+
+#####################
+#  Attacks Eps Init #
+#####################
+
+attack_eps = None
+
+try:
+    attack_eps = eval(args.attack_eps)
+except:
+    raise ValueError('Wrong Epsilon Value!')
+
+######################
+#  Test Attacks Init #
+######################
+
+# !python .\train_and_evaluate.py --test_attacks FGSM PGD-10 PGD-100
 
 test_attacks = {}
 
-# !python .\train_and_evaluate.py --test_attacks FGSM-8/255 PGD0.03-10 PGD-8/255-100
 for test_attack in args.test_attacks:
     try:
-        attack_type = test_attack.split('-')[0]
+        attack_type = test_attack.split('-')[0] if test_attack != 'FGSM' else 'FGSM'
         if attack_type == 'FGSM':
-            eps = eval(test_attack.split('-')[1])
-            current_attack = FGSM(model, eps=eps)
+            current_attack = FGSM(model, eps=attack_eps)
             current_attack.set_mode_targeted_least_likely()
             test_attacks[test_attack] = current_attack
         elif attack_type == 'PGD':
-            eps = eval(test_attack.split('-')[1])
-            steps = eval(test_attack.split('-')[2])
-            alpha = (PGD_CONSTANT * eps) / steps
-            current_attack = PGD(model, eps=eps, alpha=alpha, steps=steps)
+            steps = eval(test_attack.split('-')[1])
+            alpha = (PGD_CONSTANT * attack_eps) / steps
+            current_attack = PGD(model, eps=attack_eps, alpha=alpha, steps=steps)
             current_attack.set_mode_targeted_least_likely()
             test_attacks[test_attack] = current_attack
     except:
         raise ValueError('Invalid Attack Params!')
 
-# # if desired_attack == 'PGD':
-#     train_attack = PGD(model, eps=attack_eps,alpha= pgd_constant * attack_eps / train_attack_steps,steps=attack_steps)
-#     test_attack = PGD(model, eps=attack_eps,alpha=pgd_constant * attack_eps / test_attack_steps, steps=attack_steps)
-# else:
-#     train_attack = FGSM(model, eps=attack_eps)
-#     test_attack = FGSM(model, eps=attack_eps)
-# train_attack.set_mode_targeted_least_likely()
-# test_attack.set_mode_targeted_least_likely()
 
-# train(model, train_loader, test_loader, train_attack, test_attack)
+######################
+#  Train Attack Init #
+######################
+
+train_steps = args.train_step
+train_alpha = (PGD_CONSTANT * attack_eps) / train_steps
+train_attack = PGD(model, eps=attack_eps, alpha=train_alpha, steps=train_steps)
+
+
+################
+#  Dataloaders #
+################
+
+trainloader, testloader = get_dataloader(normal_dataset=args.source_dataset, normal_class_indx=args.source_class, exposure_dataset=args.exposure_dataset, batch_size=args.batch_size)
+
