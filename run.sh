@@ -15,10 +15,10 @@ MAX_EPOCHS=30
 TRAIN_ATTACK_STEP=10
 
 # Run test every test_step
-TEST_STEP=0.01
+TEST_STEP=1
 
 # Set step for saving models during training
-SAVE_STEP=10
+SAVE_STEP=1
 
 # Set CUDA device to use
 CUDA_DEVICE=0
