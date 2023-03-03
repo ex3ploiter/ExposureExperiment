@@ -1,13 +1,14 @@
 import argsparser
 import torch
 from torch import optim
-from utills import auc_softmax, auc_softmax_adversarial
+from utills import auc_softmax, auc_softmax_adversarial, save_model_checkpoint, load_model_checkpoint
 from tqdm import tqdm
 from torchattacks import FGSM, PGD
 from torchvision.utils import save_image
 from torchvision.utils import make_grid
 from models import FeatureExtractor
 from constants import PGD_CONSTANT
+
 # def train(model, trainloader, testloader, train_attack, test_attack, lr=1e-4, weight_decay=5e-5):
 #     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -66,7 +67,7 @@ for test_attack in args.test_attacks:
             eps = eval(test_attack.split('-')[1])
             steps = eval(test_attack.split('-')[2])
             alpha = (PGD_CONSTANT * eps) / steps
-            current_attack = PGD(model, eps=eps,alpha=alpha, steps=steps)
+            current_attack = PGD(model, eps=eps, alpha=alpha, steps=steps)
             current_attack.set_mode_targeted_least_likely()
             test_attacks.append(current_attack)
     except:
