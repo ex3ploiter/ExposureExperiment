@@ -9,7 +9,7 @@ from torchvision.utils import save_image
 from torchvision.utils import make_grid
 from utills import auc_softmax, auc_softmax_adversarial, save_model_checkpoint, load_model_checkpoint, lr_schedule, get_visualization_batch, visualize, get_attack_name
 from tqdm import tqdm
-from torchattacks import FGSM, PGD
+from torchattacks import FGSM, PGD, VANILLA
 from models import Net
 from constants import PGD_CONSTANT, dataset_labels
 from sklearn.metrics import roc_auc_score, accuracy_score
@@ -196,6 +196,7 @@ except:
 
 test_attacks = {}
 
+
 for test_attack in args.test_attacks:
     try:
         attack_type = test_attack.split('-')[0] if test_attack != 'FGSM' else 'FGSM'
@@ -219,7 +220,7 @@ for test_attack in args.test_attacks:
 
 train_steps = args.train_attack_step
 train_alpha = (PGD_CONSTANT * attack_eps) / train_steps
-train_attack = PGD(model, eps=attack_eps, alpha=train_alpha, steps=train_steps)
+train_attack = PGD(model, eps=attack_eps, alpha=train_alpha, steps=train_steps) if not args.clean else VANILLA(model)
 
 
 ################
@@ -232,8 +233,8 @@ trainloader, testloader = get_dataloader(normal_dataset=args.source_dataset, nor
 #  init checkpoint path #
 #########################
 
-checkpoint_dir = os.path.join(args.checkpoints_path, f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
-checkpoint_name = f'{args.source_dataset}-{args.source_class:02d}--{args.exposure_dataset}.pt'
+checkpoint_dir = os.path.join(args.checkpoints_path, "CLEAN-Train" if args.clean else "ADVERSARIAL-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
+checkpoint_name = f'{args.model}-{args.source_dataset}-{args.source_class:02d}--{args.exposure_dataset}.pt'
 
 if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
@@ -245,7 +246,7 @@ checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 #  init tensorboard writer #
 ############################
 
-writer_dir = os.path.join(args.output_path, f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
+writer_dir = os.path.join(args.output_path, "CLEAN-Train" if args.clean else "ADVERSARIAL-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
 writer = SummaryWriter(writer_dir)
 
 
