@@ -44,6 +44,29 @@ def auc_softmax(model, test_loader, epoch:int, device):
 
     return auc 
 
+def save_model_checkpoint(model, epoch, loss, path, optimizer):
+    try:
+        torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': loss,
+        }, path)
+    except:
+        raise ValueError('Loading model from checkpoint failed!')
+    
+
+def load_model_checkpoint(model, optimizer, path):
+    try:
+        checkpoint = torch.load(path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        epoch = checkpoint['epoch']
+        loss = checkpoint['loss']
+        return model, optimizer, epoch, loss
+    except:
+        return None
+
 
 def sparse2coarse(targets):
     """Convert Pytorch CIFAR100 sparse targets to coarse targets.
