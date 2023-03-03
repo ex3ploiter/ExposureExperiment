@@ -135,7 +135,6 @@ def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader,
 
             tepoch.set_postfix(loss=running_loss / len(preds), accuracy=100. * accuracy)
 
-    print('KIR')
     return  roc_auc_score(true_labels, anomaly_scores) , \
             accuracy_score(true_labels, preds, normalize=True), \
             running_loss / len(preds)
