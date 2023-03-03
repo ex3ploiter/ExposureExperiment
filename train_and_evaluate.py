@@ -46,6 +46,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
 
                 writer.add_scalars('AUC-Test', test_auc, epoch)
                 writer.add_scalars('Accuracy-Test', test_accuracy, epoch)
+                writer.flush()
                 writer.close()
 
         torch.cuda.empty_cache()
@@ -63,6 +64,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
         writer.add_scalar('AUC-Train', train_auc, epoch)
         writer.add_scalar('Accuracy-Train', train_accuracy, epoch)
         writer.add_scalar('Accuracy-Loss', train_loss, epoch)
+        writer.flush()
         writer.close()
 
         if train_loss < loss_threshold:
@@ -241,3 +243,9 @@ if not os.path.exists(checkpoint_dir):
 
 checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 
+
+############################
+#  init tensorboard writer #
+############################
+
+writer = SummaryWriter('runs/fashion_mnist_experiment_1')
