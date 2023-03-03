@@ -54,9 +54,9 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
                                                                 criterion=criterion,\
                                                                 trainloader=trainloader,\
                                                                 train_attack=train_attack,\
-                                                                lr=0.1)
+                                                                lr=0.1,\
+                                                                device=device)
         
-
         writer.add_scalar('AUC-Train', train_auc, epoch)
         writer.add_scalar('Accuracy-Train', train_accuracy, epoch)
         writer.add_scalar('Accuracy-Loss', train_loss, epoch)
@@ -70,7 +70,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
             save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint, optimizer=optimizer)
 
 
-def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader, train_attack, lr=0.1): 
+def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader, train_attack, lr, device): 
 
     soft = torch.nn.Softmax(dim=1)
 
