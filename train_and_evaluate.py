@@ -1,3 +1,4 @@
+from distutils.command.config import config
 import argsparser
 import torch
 import torch.nn as nn
@@ -13,12 +14,16 @@ from sklearn.metrics import roc_auc_score, accuracy_score
 
 
 
-def run(model, checkpoint, train_attack, test_attacks, trainloader, testloader, writer, test_step, max_epochs):
+def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloader, writer, test_step, save_step, max_epochs, loss_threshold=1e-3):
 
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
     criterion = nn.CrossEntropyLoss()
-
     init_epoch = 0
+
+    checkpoint = load_model_checkpoint(model=model, optimizer=optimizer, path=checkpoint_path)
+
+    if checkpoint is not None:
+        model, optimizer, init_epoch, loss = checkpoint
 
     for epoch in range(init_epoch, max_epochs+1):
 
@@ -57,7 +62,12 @@ def run(model, checkpoint, train_attack, test_attacks, trainloader, testloader, 
         writer.add_scalar('Accuracy-Loss', train_loss, epoch)
         writer.close()
 
-
+        if train_loss < loss_threshold:
+            save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint, optimizer=optimizer)
+            break
+        
+        if epoch > 0 and epoch % save_step == 0:
+            save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint, optimizer=optimizer)
 
 
 def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader, train_attack, lr=0.1): 
