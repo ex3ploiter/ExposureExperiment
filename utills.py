@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-import torch.nn.functional as F
+import torchvision.transforms.functional as F
 from torchvision.utils import make_grid
 
 def auc_softmax_adversarial(model, test_loader, test_attack, epoch:int, device):
