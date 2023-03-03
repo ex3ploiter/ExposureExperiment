@@ -5,7 +5,9 @@ MNIST_PATH = '~/MNIST/'
 FMNIST_PATH = '~/FMNIST/'
 SVHN_PATH = '~/SVHN/'
 MVTEC_PATH = '~/MVTEC/'
+
 PGD_CONSTANT = 2.5
+
 mvtec_labels = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'leather',
                 'metal_nut', 'pill', 'screw', 'tile', 'toothbrush', 'transistor',
                 'wood', 'zipper']
@@ -37,7 +39,7 @@ dataset_labels = {
     'mnist': [str(i) for i in range(10)],
     'svhn': [str(i) for i in range(10)],
     'cifar10': ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck'],
-    'fashion': ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle-boot'],
+    'fashion': ['T-shirt-top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle-boot'],
     'cifar100': ['-'.join(super_class) for super_class in cifar10_super_classes],
     'mvtec': mvtec_labels
 }
