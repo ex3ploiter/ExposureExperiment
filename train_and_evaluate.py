@@ -53,8 +53,8 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
                 writer.flush()
 
                 for attack_name, attack in test_attacks.items():
-                    writer.add_figures(f'Sample Peturbations Train {get_attack_name(attack)}', visualize(vis_batch_train[0], vis_batch_train[1], attack), epoch)
-                    writer.add_figures(f'Sample Peturbations Test {get_attack_name(attack)}', visualize(vis_batch_test[0], vis_batch_test[1], attack), epoch)
+                    writer.add_figure(f'Sample Peturbations Train {get_attack_name(attack)}', visualize(vis_batch_train[0], vis_batch_train[1], attack), epoch)
+                    writer.add_figure(f'Sample Peturbations Test {get_attack_name(attack)}', visualize(vis_batch_test[0], vis_batch_test[1], attack), epoch)
                     writer.flush()
 
         torch.cuda.empty_cache()
@@ -174,7 +174,7 @@ try:
 except Exception as err:
     raise err
 
-print(args.args.model)
+print(args.model)
 
 
 #####################
@@ -217,7 +217,7 @@ for test_attack in args.test_attacks:
 #  Train Attack Init #
 ######################
 
-train_steps = args.train_step
+train_steps = args.train_attack_step
 train_alpha = (PGD_CONSTANT * attack_eps) / train_steps
 train_attack = PGD(model, eps=attack_eps, alpha=train_alpha, steps=train_steps)
 
@@ -232,7 +232,7 @@ trainloader, testloader = get_dataloader(normal_dataset=args.source_dataset, nor
 #  init checkpoint path #
 #########################
 
-checkpoint_dir = os.path.join(args.checkpoints_path, f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_class]}', f'exposure-{args.exposure_dataset}')
+checkpoint_dir = os.path.join(args.checkpoints_path, f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
 checkpoint_name = f'{args.source_dataset}-{args.source_class:02d}--{args.exposure_dataset}.pt'
 
 if not os.path.exists(checkpoint_dir):
@@ -245,7 +245,7 @@ checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 #  init tensorboard writer #
 ############################
 
-writer_dir = os.path.join(args.output_path, f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_class]}', f'exposure-{args.exposure_dataset}')
+writer_dir = os.path.join(args.output_path, f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
 writer = SummaryWriter('runs/fashion_mnist_experiment_1')
 
 
@@ -264,6 +264,6 @@ run(model=model,\
     test_step=args.test_step,\
     save_step=args.save_step,\
     max_epochs=args.max_epochs,\
-    device=device\
+    device=device,\
     loss_threshold=args.loss_threshold\
     )

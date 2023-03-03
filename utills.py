@@ -45,7 +45,7 @@ def auc_softmax_adversarial(model, test_loader, test_attack, epoch:int, device):
     else:
         model.eval()
 
-    return auc
+    return auc, accuracy
 
 def auc_softmax(model, test_loader, epoch:int, device):
 
@@ -153,7 +153,7 @@ def get_visualization_batch(dataloader, n):
   normal_batch = images_batch[labels_batch==0][:n]
   abnormal_batch = images_batch[labels_batch==1][:n]
 
-  return torch.cat((normal_batch, abnormal_batch),dim=0), torch.tensor([0] * n + [1] * n)
+  return torch.cat((normal_batch, abnormal_batch),dim=0).cuda(), torch.tensor([0] * n + [1] * n).cuda()
 
 
 def get_attack_name(attack):
@@ -168,7 +168,8 @@ def visualize(img_batch, labels, attack, nrow=10):
 
     ncols = img_batch.shape[0] // nrow
 
-    fig = plt.figure(constrained_layout=True, figsize=(20, ncols * 15 + 2))
+
+    fig = plt.figure(constrained_layout=True, figsize=(20, (ncols/nrow) * 15 + 2))
     
     fig.suptitle(get_attack_name(attack), size=32)
 

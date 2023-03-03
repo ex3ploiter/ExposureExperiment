@@ -7,8 +7,9 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 from PIL import Image
 from glob import glob
-from utills import sparse2coarse, mvtec_labels
-from constants import CIFAR10_PATH, CIFAR100_PATH, MNIST_PATH, FMNIST_PATH, SVHN_PATH, MVTEC_PATH
+from utills import sparse2coarse
+from constants import CIFAR10_PATH, CIFAR100_PATH, MNIST_PATH, FMNIST_PATH, SVHN_PATH, MVTEC_PATH, mvtec_labels
+import torchvision.transforms.functional as F
 
 
 tansform_224 = transforms.Compose([

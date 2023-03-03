@@ -19,7 +19,9 @@ def parse_args():
 
     parser.add_argument("--checkpoints_path", help='Path to save the checkpoint of trained model', default='./Model-Checkpoints/', type=str)
 
-    parser.add_argument("--max_epochs", help='Maximum number of epochs to Continue training', default=30, type=str)
+    parser.add_argument("--max_epochs", help='Maximum number of epochs to Continue training', default=30, type=int)
+
+    parser.add_argument("--batch_size", help='batch_size', default=32, type=int)
     
     parser.add_argument('--attack_eps', type=str, default='8/255',  help='Attack eps used for both training and testing',)
 
