@@ -133,3 +133,22 @@ def lr_schedule(learning_rate:float, t:float, max_epochs:int):
         return learning_rate / 10.
     else:
         return learning_rate / 100.
+    
+
+def get_visualization_batch(dataloader, n):
+  
+  iterator = iter(dataloader)
+  images_batch, labels_batch = next(iterator)
+  print(labels_batch)
+  while True:
+    if labels_batch.sum().item() > n and (1 - labels_batch).sum().item() > n:
+      break
+
+    new_images_batch, new_labels_batch = next(iterator)
+    labels_batch = torch.cat((labels_batch, new_labels_batch), dim=0)
+    images_batch = torch.cat((images_batch, new_images_batch), dim=0)
+
+  normal_batch = images_batch[labels_batch==0][:n]
+  abnormal_batch = images_batch[labels_batch==1][:n]
+
+  return normal_batch, abnormal_batch
