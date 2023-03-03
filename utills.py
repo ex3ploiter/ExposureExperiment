@@ -124,3 +124,12 @@ def sparse2coarse(targets):
                               16, 19, 2, 4, 6, 19, 5, 5, 8, 19,
                               18, 1, 2, 15, 6, 0, 17, 8, 14, 13])
     return coarse_labels[targets]
+
+
+def lr_schedule(learning_rate:float, t:float, max_epochs:int):
+    if t / max_epochs < 0.5:
+        return learning_rate
+    elif t / max_epochs < 0.75:
+        return learning_rate / 10.
+    else:
+        return learning_rate / 100.

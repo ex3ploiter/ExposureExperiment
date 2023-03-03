@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.optim as optim
 import preactresnet
 
-class FeatureExtractor(nn.Module):
+class Net(nn.Module):
   def __init__(self, model:int=18, pretrained:bool=True):
-    super(FeatureExtractor, self).__init__()
+    super(Net, self).__init__()
 
     # Load a pretrained resnet model from torchvision.models in Pytorch
     self.model = None

@@ -1,45 +1,77 @@
 import argsparser
 import torch
+import torch.nn as nn
 from torch import optim
-from utills import auc_softmax, auc_softmax_adversarial, save_model_checkpoint, load_model_checkpoint
-from tqdm import tqdm
-from torchattacks import FGSM, PGD
 from torchvision.utils import save_image
 from torchvision.utils import make_grid
-from models import FeatureExtractor
+from utills import auc_softmax, auc_softmax_adversarial, save_model_checkpoint, load_model_checkpoint, lr_schedule
+from tqdm import tqdm
+from torchattacks import FGSM, PGD
+from models import Net
 from constants import PGD_CONSTANT
 
-# def train(model, trainloader, testloader, train_attack, test_attack, lr=1e-4, weight_decay=5e-5):
-#     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader, train_attack, lr=0.1):    
+    preds = []
+    true_labels = []
+    running_loss = 0
+    accuracy = 0
 
-#     for epoch in range(1, n_epochs+1):
-#         print(f"Epoch {epoch} started")
-        
-#         total_loss, total_num = 0.0, 0
-#         model.train()
-#         loss = nn.CrossEntropyLoss()
-#         train_bar =  tqdm(trainloader, desc='Train Binary Classifier ...')
-#         for (img1, Y ) in train_bar:
-#             adv_data = train_attack(img1, Y)
-#             optimizer.zero_grad()
-#             out_1 = model(adv_data.cuda()) 
-#             loss_ = loss(out_1,Y.cuda())  
-#             loss_.backward()
-#             optimizer.step()
-#             total_num += img1.size(0)
-#             total_loss += loss_.item() * img1.size(0)
-#             total_num += trainloader.batch_size
-#             total_loss += loss_.item() * trainloader.batch_size
-#             train_bar.set_description('Train Robust Epoch :  {} , Clf_B Robust Loss: {:.4f}'.format(epoch ,  total_loss / total_num))
+    model.train()
+    with tqdm(trainloader, unit="batch") as tepoch:
+        torch.cuda.empty_cache()
+        for i, (data, target) in enumerate(tepoch):
+            tepoch.set_description(f"Epoch {epoch + 1}/{max_epochs}")
 
-#         if (epoch + 1) % auc_every == 0:
-#             print(f"Starting to Test After {epoch} epochs have finished:")
-#             model.eval()
-#             auc_softmax(model, testloader, epoch)
-#             auc_softmax_adversarial(model, testloader, test_attack, epoch)
+            updated_lr = lr_schedule(learning_rate=lr, t=epoch + (i + 1) / len(list(tepoch)), max_epochs=max_epochs) 
+            optimizer.param_groups[0].update(lr=updated_lr)
+            
+            data, target = data.to(device), target.to(device)
+            target = target.type(torch.LongTensor).cuda()
+            
+            # Adversarial attack on every batch
+            data = train_attack(data, target)
+
+            # Zero gradients for every batch
+            optimizer.zero_grad()
+
+            # Make predictions for this batch
+            output = model(data)
+
+            # Compute the loss and its gradients
+            loss = criterion(output, target)
+            loss.backward()
+
+            # Adjust learning weights
+            optimizer.step()
+            
+            true_labels += target.detach().cpu().numpy().tolist()
+
+            predictions = output.argmax(dim=1, keepdim=True).squeeze()
+            preds += predictions.detach().cpu().numpy().tolist()
+            correct = (torch.tensor(preds) == torch.tensor(true_labels)).sum().item()
+            accuracy = correct / len(preds)
+
+            running_loss += loss.item() * data.size(0)
+
+            tepoch.set_postfix(loss=running_loss / len(preds), accuracy=100. * accuracy)
+
+    # sample_batch = [first_batch_imgs]
+    # attack_names = []
+
+    # for attack_name, attack_module in test_attacks.items():
+    #     attack_names.append(attack_name)
+    #     sample_batch.append(attack_module(first_batch_imgs, first_batch_labels))
+
+    # writer.add_images(tag='DICk', img_tensor=torch.cat(sample_batch))
+    # # writer.add_scalars
+    # results["Train Accuracy"].append(100. * accuracy)
+    # results["Loss"].append(running_loss / len(preds))
+    return accuracy, running_loss / len(preds)
+
 
 args = argsparser.parse_args()
 print(args)
+
 try:
     device = torch.device(f"cuda:{args.cuda_device}" if torch.cuda.is_available() else "cpu")
 except:
@@ -50,9 +82,9 @@ print(device)
 
 if args.model == 'preactresnet18':
     
-    model = FeatureExtractor().to(device)
+    model = Net().to(device)
 
-test_attacks = []
+test_attacks = {}
 
 # !python .\train_and_evaluate.py --test_attacks FGSM-8/255 PGD0.03-10 PGD-8/255-100
 for test_attack in args.test_attacks:
@@ -62,14 +94,14 @@ for test_attack in args.test_attacks:
             eps = eval(test_attack.split('-')[1])
             current_attack = FGSM(model, eps=eps)
             current_attack.set_mode_targeted_least_likely()
-            test_attacks.append(current_attack)
+            test_attacks[test_attack] = current_attack
         elif attack_type == 'PGD':
             eps = eval(test_attack.split('-')[1])
             steps = eval(test_attack.split('-')[2])
             alpha = (PGD_CONSTANT * eps) / steps
             current_attack = PGD(model, eps=eps, alpha=alpha, steps=steps)
             current_attack.set_mode_targeted_least_likely()
-            test_attacks.append(current_attack)
+            test_attacks[test_attack] = current_attack
     except:
         raise ValueError('Invalid Attack Params!')
 
