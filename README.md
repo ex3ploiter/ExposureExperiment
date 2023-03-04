@@ -29,6 +29,8 @@ python train_and_evaluate.py --source_dataset $SOURCE_DATASET --source_class $CL
 
 `--output_path`: Specifies the path to which plots, results, and other data will be recorded. The default path is './results/'.
 
+`--tensorboard_path`: Specifies the path to which plots, results, and other data will be recorded. The default path is './tensorboard/'.
+
 `--max_epochs`: Specifies the maximum number of epochs to train the model. The default value is 30.
 
 `--batch_size`: Specifies the size of each batch input to the model. The default value is 128.
@@ -46,6 +48,8 @@ python train_and_evaluate.py --source_dataset $SOURCE_DATASET --source_class $CL
 `--save_step`: Specifies the frequency at which to save model checkpoints. The default value is 1.
 
 `--cuda_device`: Specifies the index of your CUDA device. The default value is 0.
+
+`--force_restart`: Specifies whether to start training from scratch (if present) or use already available checkpoints
 
 `--loss_threshold`: Specifies the loss threshold used for early stopping. The default value is 0.001.
 
