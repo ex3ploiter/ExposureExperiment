@@ -169,6 +169,16 @@ def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader,
 ##################
 
 args = argsparser.parse_args()
+
+
+#######################
+#  init custom logger #
+#######################
+
+logger_dir = os.path.join(args.output_path, "Clean-Train" if args.clean else "Adversarial-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
+experiment_name = f'{args.model}-{args.source_dataset}-{args.source_class:02d}--{args.exposure_dataset}'
+logger = Logger(save_dir=logger_dir, exp_name=experiment_name, hparams=args)
+
 logger.add_log(args)
 
 
@@ -256,7 +266,7 @@ trainloader, testloader = get_dataloader(normal_dataset=args.source_dataset, nor
 #  init checkpoint path #
 #########################
 
-checkpoint_dir = os.path.join(args.checkpoints_path, "CLEAN-Train" if args.clean else "ADVERSARIAL-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
+checkpoint_dir = os.path.join(args.checkpoints_path, "Clean-Train" if args.clean else "Adversarial-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
 checkpoint_name = f'{args.model}-{args.source_dataset}-{args.source_class:02d}--{args.exposure_dataset}.pt'
 
 if not os.path.exists(checkpoint_dir):
@@ -269,17 +279,8 @@ checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 #  init tensorboard writer #
 ############################
 
-writer_dir = os.path.join(args.tensorboard_path, "CLEAN-Train" if args.clean else "ADVERSARIAL-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
+writer_dir = os.path.join(args.tensorboard_path, "Clean-Train" if args.clean else "Adversarial-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
 writer = SummaryWriter(writer_dir)
-
-
-#######################
-#  init custom logger #
-#######################
-
-logger_dir = os.path.join(args.output_path, "CLEAN-Train" if args.clean else "ADVERSARIAL-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
-experiment_name = f'{args.model}-{args.source_dataset}-{args.source_class:02d}--{args.exposure_dataset}'
-logger = Logger(save_dir=logger_dir, exp_name=experiment_name, hparams=args)
 
 
 ##################################
