@@ -1,4 +1,5 @@
 from ast import arg
+from asyncio.log import logger
 from asyncore import write
 from distutils.command.config import config
 import argsparser
@@ -16,9 +17,9 @@ from sklearn.metrics import roc_auc_score, accuracy_score
 from torch.utils.tensorboard.writer import SummaryWriter
 from datasets import get_dataloader
 import os
+from logger import Logger
 
-
-def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloader, writer, test_step, save_step, max_epochs, device, loss_threshold=1e-3):
+def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloader, writer, logger:Logger, test_step, save_step, max_epochs, device, loss_threshold=1e-3):
 
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
     criterion = nn.CrossEntropyLoss()
@@ -32,32 +33,50 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
     vis_batch_train = get_visualization_batch(dataloader=trainloader, n=50)
     vis_batch_test = get_visualization_batch(dataloader=testloader, n=50)
 
+    logger.add_log(f'Starting Run from epoch {init_epoch}')
+
     for epoch in range(init_epoch, max_epochs+1):
 
         torch.cuda.empty_cache()
+
+        logs = {}
 
         if epoch % test_step == 0 :
                 
                 test_auc = {}
                 test_accuracy = {}
 
+                logger.add_log(f'AUC & Accuracy Vanila - Started...')
                 clean_auc, clean_accuracy  = auc_softmax(model=model, epoch=epoch, test_loader=testloader, device=device)
                 test_auc['Clean'], test_accuracy['Clean'] = clean_auc, clean_accuracy
+                logger.add_log(f'AUC Vanila - score on epoch {epoch} is: {clean_auc * 100}')
+                logger.add_log(f'Accuracy Vanila -  score on epoch {epoch} is: {clean_accuracy * 100}')
+                logs[f'AUC-Clean'], logs[f'Accuracy-Clean'] = clean_auc, clean_accuracy
 
                 for attack_name, attack in test_attacks.items():
+                    logger.add_log(f'AUC & Accuracy Adversarial - {get_attack_name(attack)} - Started...')
                     adv_auc, adv_accuracy = auc_softmax_adversarial(model=model, epoch=epoch, test_loader=testloader, test_attack=attack, device=device)
                     test_auc[attack_name], test_accuracy[attack_name] = adv_auc, adv_accuracy
+                    logger.add_log(f'AUC Adversairal {get_attack_name(attack)} - score on epoch {epoch} is: {adv_auc * 100}')
+                    logger.add_log(f'Accuracy Adversairal {get_attack_name(attack)} -  score on epoch {epoch} is: {adv_accuracy * 100}')
+                    logs[f'AUC-{get_attack_name(attack)}'], logs[f'Accuracy-{get_attack_name(attack)}'] = adv_auc, adv_accuracy
+
 
                 writer.add_scalars('AUC-Test', test_auc, epoch)
                 writer.add_scalars('Accuracy-Test', test_accuracy, epoch)
                 writer.flush()
 
                 for attack_name, attack in test_attacks.items():
-                    writer.add_figure(f'Sample Peturbations Train {get_attack_name(attack)}', visualize(vis_batch_train[0], vis_batch_train[1], attack), epoch)
-                    writer.add_figure(f'Sample Peturbations Test {get_attack_name(attack)}', visualize(vis_batch_test[0], vis_batch_test[1], attack), epoch)
+                    fig_train, fig_test =  visualize(vis_batch_train[0], vis_batch_train[1], attack), visualize(vis_batch_test[0], vis_batch_test[1], attack)
+                    writer.add_figure(f'Sample Peturbations Train {get_attack_name(attack)}', fig_train, epoch)
+                    writer.add_figure(f'Sample Peturbations Test {get_attack_name(attack)}', fig_test, epoch)
+                    logger.add_figure(fig=fig_train, epoch=epoch, name='train')
+                    logger.add_figure(fig=fig_train, epoch=epoch, name='test')
                     writer.flush()
 
         torch.cuda.empty_cache()
+
+        logger.add_log(f'Starting Training on epoch {init_epoch}')
 
         train_auc, train_accuracy, train_loss = train_one_epoch(epoch=epoch,\
                                                                 max_epochs=max_epochs, \
@@ -71,17 +90,22 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
         
         writer.add_scalar('AUC-Train', train_auc, epoch)
         writer.add_scalar('Accuracy-Train', train_accuracy, epoch)
-        writer.add_scalar('Accuracy-Loss', train_loss, epoch)
+        writer.add_scalar('Train-Loss', train_loss, epoch)
         writer.flush()
-        
+
+        logs['AUC-Train'],  logs['Accuracy-Train'], logs['Train-Loss'] = train_auc, train_accuracy, train_loss
+        logger.add_csv(dict_to_append=logs)
 
         if train_loss < loss_threshold:
+            logger.add_log(f'Early Stopping! the train loss is lower than {loss_threshold}')
             save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint_path, optimizer=optimizer)
             break
         
         if epoch > 0 and epoch % save_step == 0:
+            logger.add_log(f'Saved Model on epoch {epoch} at {checkpoint_path}')
             save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint_path, optimizer=optimizer)
 
+    logger.add_log(f'Run successfully finished!')
     writer.close()
 
 def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader, train_attack, lr, device): 
@@ -145,7 +169,7 @@ def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader,
 ##################
 
 args = argsparser.parse_args()
-print(args)
+logger.add_log(args)
 
 
 ################
@@ -160,7 +184,7 @@ except:
     raise ValueError('Wrong CUDA Device!')
 
 
-print(device)
+logger.add_log(device)
 
 ####################
 #  Model Selection #
@@ -173,7 +197,7 @@ try:
 except Exception as err:
     raise err
 
-print(args.model)
+logger.add_log(args.model)
 
 
 #####################
@@ -245,8 +269,17 @@ checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 #  init tensorboard writer #
 ############################
 
-writer_dir = os.path.join(args.output_path, "CLEAN-Train" if args.clean else "ADVERSARIAL-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
+writer_dir = os.path.join(args.tensorboard_path, "CLEAN-Train" if args.clean else "ADVERSARIAL-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
 writer = SummaryWriter(writer_dir)
+
+
+#######################
+#  init custom logger #
+#######################
+
+logger_dir = os.path.join(args.output_path, "CLEAN-Train" if args.clean else "ADVERSARIAL-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
+experiment_name = f'{args.model}-{args.source_dataset}-{args.source_class:02d}--{args.exposure_dataset}'
+logger = Logger(save_dir=logger_dir, exp_name=experiment_name, hparams=args)
 
 
 ##################################
@@ -261,6 +294,7 @@ run(model=model,\
     trainloader=trainloader,\
     testloader=testloader,\
     writer=writer,\
+    logger=logger,\
     test_step=args.test_step,\
     save_step=args.save_step,\
     max_epochs=args.max_epochs,\

@@ -16,8 +16,6 @@ def auc_softmax_adversarial(model, test_loader, test_attack, epoch:int, device):
     preds = []
     test_labels = []
 
-    print(f'AUC & Accuracy Adversarial Softmax - {get_attack_name(test_attack)} - Started ...')
-
     with tqdm(test_loader, unit="batch") as tepoch:
         torch.cuda.empty_cache()
         for i, (data, target) in enumerate(tepoch):
@@ -37,9 +35,6 @@ def auc_softmax_adversarial(model, test_loader, test_attack, epoch:int, device):
     auc = roc_auc_score(test_labels, anomaly_scores)
     accuracy = accuracy_score(test_labels, preds, normalize=True)
 
-    print(f'AUC Adversairal - Softmax - {get_attack_name(test_attack)} - score on epoch {epoch} is: {auc * 100}')
-    print(f'Accuracy Adversairal - Softmax - {get_attack_name(test_attack)} -  score on epoch {epoch} is: {accuracy * 100}')
-
     if is_train:
         model.train()
     else:
@@ -57,7 +52,6 @@ def auc_softmax(model, test_loader, epoch:int, device):
     preds = []
     test_labels = []
 
-    print('AUC & Accuracy Softmax Started ...')
     with torch.no_grad():
         with tqdm(test_loader, unit="batch") as tepoch:
             torch.cuda.empty_cache()
@@ -75,9 +69,6 @@ def auc_softmax(model, test_loader, epoch:int, device):
 
     auc = roc_auc_score(test_labels, anomaly_scores)
     accuracy = accuracy_score(test_labels, preds, normalize=True)
-
-    print(f'AUC - Softmax - score on epoch {epoch} is: {auc * 100}')
-    print(f'Accuracy - Softmax - score on epoch {epoch} is: {accuracy * 100}')
 
     if is_train:
         model.train()

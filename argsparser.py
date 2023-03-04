@@ -13,7 +13,10 @@ def parse_args():
 
     parser.add_argument('--output_path', help='Path to which plots, results, etc will be recorded',
                         default='./results/', type=str)
-
+    
+    parser.add_argument('--tensorboard_path', help='Path to which plots, results, etc will be recorded on tensorboard',
+                        default='./tensorboard/', type=str)
+    
     parser.add_argument('--exposure_dataset', help='Target Dataset as one-class for normal',
                         choices=['cifar10', 'cifar100', 'mnist', 'fashion', 'mvtec', 'svhn'], type=str)
 
