@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 from glob import glob
 from utills import sparse2coarse
-from constants import CIFAR10_PATH, CIFAR100_PATH, MNIST_PATH, FMNIST_PATH, SVHN_PATH, MVTEC_PATH, mvtec_labels
+from constants import CIFAR10_PATH, CIFAR100_PATH, MNIST_PATH, FMNIST_PATH, SVHN_PATH, MVTEC_PATH, ADAPTIVE_PATH, mvtec_labels
 import torchvision.transforms.functional as F
 import requests
 from PIL import Image
@@ -254,6 +254,8 @@ def get_exposure(dataset:str='cifar10', normal_dataset:str='cifar100', normal_cl
         return get_SVHN_exposure(normal_dataset, normal_class_indx, count)
     elif dataset == 'mvtec':
         return get_MVTEC_exposure(normal_dataset, normal_class_indx, count)
+    elif dataset == 'adaptive':
+        return get_ADAPTIVE_exposure(normal_dataset, normal_class_indx, count)
     else:
         raise Exception("Dataset is not supported yet. ")
     
@@ -390,6 +392,27 @@ def get_SVHN_exposure(normal_dataset:str, normal_class_indx:int, count:int):
     exposure_data =  exposure_data[indices]
 
     return [F.to_tensor(np.array(x).astype(np.uint8).transpose(1, 2, 0)) for x  in exposure_data]
+
+
+def get_ADAPTIVE_exposure(normal_dataset:str, normal_class_indx:int,count:int):
+    exposure_data = []
+    try:
+        exposure_path = glob(os.path.join(ADAPTIVE_PATH, normal_dataset, f'{normal_class_indx}', "*.npy"), recursive=True)
+        for path in exposure_path:
+            exposure_data += np.load(path).tolist()
+    except:
+        raise ValueError('Wrong Exposure Address!')
+        exit()
+
+    exposure_data = torch.tensor(exposure_data)
+
+    if exposure_data.size(0) < count:
+        copy_dataset(exposure_data, count)
+
+    indices = torch.randperm(exposure_data.size(0))[:count]
+    exposure_data =  exposure_data[indices]
+
+    return exposure_data
 
 
 class MVTecDatasetExposure(torch.utils.data.Dataset):

@@ -18,7 +18,7 @@ def parse_args():
                         default='./tensorboard/', type=str)
     
     parser.add_argument('--exposure_dataset', help='Target Dataset as one-class for normal',
-                        choices=['cifar10', 'cifar100', 'mnist', 'fashion', 'mvtec', 'svhn'], type=str)
+                        choices=['cifar10', 'cifar100', 'mnist', 'fashion', 'mvtec', 'svhn', 'adaptive'], type=str)
 
     parser.add_argument("--checkpoints_path", help='Path to save the checkpoint of trained model', default='./Model-Checkpoints/', type=str)
 
