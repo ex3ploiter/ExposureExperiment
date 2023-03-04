@@ -236,7 +236,7 @@ def get_exposure(dataset:str='cifar10', normal_dataset:str='cifar100', normal_cl
         raise Exception("Dataset is not supported yet. ")
     
 
-def copy_dataset(dataset:list , target_count:int):
+def copy_dataset(dataset , target_count:int):
     while target_count > len(dataset):
         dataset = torch.cat((dataset, dataset.data), 0)
 
@@ -251,11 +251,11 @@ def get_CIFAR10_exposure(normal_dataset:str, normal_class_indx:int, count:int):
         exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
         exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
 
-    exposure_data = torch.Tensor(exposure_train.data)
+    exposure_data = torch.tensor(exposure_train.data)
     del exposure_train
 
     if exposure_data.size(0) < count:
-        exposure_data = torch.cat((exposure_data, torch.Tensor(exposure_test.data)), 0)
+        exposure_data = torch.cat((exposure_data, torch.tensor(exposure_test.data)), 0)
     
     del exposure_test
     
@@ -277,11 +277,11 @@ def get_CIFAR100_exposure(normal_dataset:str, normal_class_indx:int, count:int):
         exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
         exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
 
-    exposure_data = torch.Tensor(exposure_train.data)
+    exposure_data = torch.tensor(exposure_train.data)
     del exposure_train
 
     if exposure_data.size(0) < count:
-        exposure_data = torch.cat((exposure_data, torch.Tensor(exposure_test.data)), 0)
+        exposure_data = torch.cat((exposure_data, torch.tensor(exposure_test.data)), 0)
     
     del exposure_test
     
@@ -303,11 +303,11 @@ def get_MNIST_exposure(normal_dataset:str, normal_class_indx:int, count:int):
         exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
         exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
 
-    exposure_data = torch.Tensor(exposure_train.data)
+    exposure_data = torch.tensor(exposure_train.data)
     del exposure_train
 
     if exposure_data.size(0) < count:
-        exposure_data = torch.cat((exposure_data, torch.Tensor(exposure_test.data)), 0)
+        exposure_data = torch.cat((exposure_data, torch.tensor(exposure_test.data)), 0)
     
     del exposure_test
     
@@ -328,11 +328,11 @@ def get_FASHION_MNIST_exposure(normal_dataset:str, normal_class_indx:int, count:
         exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
         exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
 
-    exposure_data = torch.Tensor(exposure_train.data)
+    exposure_data = torch.tensor(exposure_train.data)
     del exposure_train
 
     if exposure_data.size(0) < count:
-        exposure_data = torch.cat((exposure_data, torch.Tensor(exposure_test.data)), 0)
+        exposure_data = torch.cat((exposure_data, torch.tensor(exposure_test.data)), 0)
     
     del exposure_test
     
@@ -348,12 +348,16 @@ def get_FASHION_MNIST_exposure(normal_dataset:str, normal_class_indx:int, count:
 def get_SVHN_exposure(normal_dataset:str, normal_class_indx:int, count:int):    
     exposure_train = SVHN(root=SVHN_PATH, split='train', download=True)
     exposure_test = SVHN(root=SVHN_PATH, split='test', download=True)
+    
+    if normal_dataset.lower() == 'svhn':
+        exposure_train.data = exposure_train.data[np.array(exposure_train.labels) != normal_class_indx]
+        exposure_test.data = exposure_test.data[np.array(exposure_test.labels) != normal_class_indx]
 
-    exposure_data = torch.Tensor(exposure_train.data)
+    exposure_data = torch.tensor(exposure_train.data)
     del exposure_train
 
     if exposure_data.size(0) < count:
-        exposure_data = torch.cat((exposure_data, torch.Tensor(exposure_test.data)), 0)
+        exposure_data = torch.cat((exposure_data, torch.tensor(exposure_test.data)), 0)
     
     del exposure_test
     
@@ -380,7 +384,7 @@ class MVTecDatasetExposure(torch.utils.data.Dataset):
 
 
 def get_MVTEC_exposure(normal_dataset:str, normal_class_indx:int, count:int):    
-    exposure_data = torch.Tensor(MVTecDatasetExposure(root=MVTEC_PATH).data)
+    exposure_data = torch.tensor(MVTecDatasetExposure(root=MVTEC_PATH).data)
 
     if exposure_data.size(0) < count:
         copy_dataset(exposure_data, count)
