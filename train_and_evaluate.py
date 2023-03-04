@@ -33,6 +33,9 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
     vis_batch_train = get_visualization_batch(dataloader=trainloader, n=50)
     vis_batch_test = get_visualization_batch(dataloader=testloader, n=50)
 
+    writer.add_graph(model, vis_batch_train[0])
+    writer.flush()
+
     logger.add_log(f'Starting Run from epoch {init_epoch}')
 
     for epoch in range(init_epoch, max_epochs+1):
