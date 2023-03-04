@@ -6,7 +6,7 @@ def parse_args():
     parser = ArgumentParser(description='Outlier Exposure Experiments Automation')
 
     parser.add_argument('--source_dataset', help='Target Dataset as one-class for normal',
-                        choices=['cifar10', 'cifar100', 'mnist', 'fashion', 'mvtec-ad', 'med'], type=str)
+                        choices=['cifar10', 'cifar100', 'mnist', 'fashion', 'mvtec', 'svhn'], type=str)
 
     parser.add_argument('--source_class', help='Index of Normal Class',
                         default=None, type=int)
