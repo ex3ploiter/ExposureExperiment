@@ -79,34 +79,36 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
 
         torch.cuda.empty_cache()
 
-        logger.add_log(f'Starting Training on epoch {init_epoch}')
-
-        train_auc, train_accuracy, train_loss = train_one_epoch(epoch=epoch,\
-                                                                max_epochs=max_epochs, \
-                                                                model=model,\
-                                                                optimizer=optimizer,
-                                                                criterion=criterion,\
-                                                                trainloader=trainloader,\
-                                                                train_attack=train_attack,\
-                                                                lr=0.1,\
-                                                                device=device)
         
-        writer.add_scalar('AUC-Train', train_auc, epoch)
-        writer.add_scalar('Accuracy-Train', train_accuracy, epoch)
-        writer.add_scalar('Train-Loss', train_loss, epoch)
-        writer.flush()
+        if epoch < max_epochs:
+            logger.add_log(f'Starting Training on epoch {init_epoch}')
+            train_auc, train_accuracy, train_loss = train_one_epoch(epoch=epoch,\
+                                                                    max_epochs=max_epochs, \
+                                                                    model=model,\
+                                                                    optimizer=optimizer,
+                                                                    criterion=criterion,\
+                                                                    trainloader=trainloader,\
+                                                                    train_attack=train_attack,\
+                                                                    lr=0.1,\
+                                                                    device=device)
+            
+            writer.add_scalar('AUC-Train', train_auc, epoch)
+            writer.add_scalar('Accuracy-Train', train_accuracy, epoch)
+            writer.add_scalar('Train-Loss', train_loss, epoch)
+            writer.flush()
 
-        logs['AUC-Train'],  logs['Accuracy-Train'], logs['Train-Loss'] = train_auc, train_accuracy, train_loss
+            logs['AUC-Train'],  logs['Accuracy-Train'], logs['Train-Loss'] = train_auc, train_accuracy, train_loss
+
+            if train_loss < loss_threshold:
+                logger.add_log(f'Early Stopping! the train loss is lower than {loss_threshold}')
+                save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint_path, optimizer=optimizer)
+                break
+        
+            if epoch > 0 and epoch % save_step == 0:
+                logger.add_log(f'Saved Model on epoch {epoch} at {checkpoint_path}')
+                save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint_path, optimizer=optimizer)
+
         logger.add_csv(dict_to_append=logs)
-
-        if train_loss < loss_threshold:
-            logger.add_log(f'Early Stopping! the train loss is lower than {loss_threshold}')
-            save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint_path, optimizer=optimizer)
-            break
-        
-        if epoch > 0 and epoch % save_step == 0:
-            logger.add_log(f'Saved Model on epoch {epoch} at {checkpoint_path}')
-            save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint_path, optimizer=optimizer)
 
     logger.add_log(f'Run successfully finished!')
     writer.close()
