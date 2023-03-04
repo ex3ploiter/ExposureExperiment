@@ -21,13 +21,13 @@ def parse_args():
 
     parser.add_argument("--max_epochs", help='Maximum number of epochs to Continue training', default=30, type=int)
 
-    parser.add_argument("--batch_size", help='batch_size', default=32, type=int)
+    parser.add_argument("--batch_size", help='batch_size', default=128, type=int)
     
     parser.add_argument('--attack_eps', type=str, default='8/255',  help='Attack eps used for both training and testing',)
 
     parser.add_argument('--test_attacks', help='Desired Attacks for adversarial test', nargs='+', action='extend')
 
-    parser.add_argument('--train_attack_step', help='Desired Attacks for adversarial training', default=10, type=int)
+    parser.add_argument('--train_attack_step', help='Desired attack step for adversarial training', default=10, type=int)
 
     parser.add_argument("--clean", action="store_true", help="if true normal training else adversarial-training")
 
