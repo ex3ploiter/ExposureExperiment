@@ -43,6 +43,7 @@ class Logger:
         if self.csv_file.tell() == 0:
             writer.writeheader()
         writer.writerow(dict_to_append)
+        self.csv_file.flush()
 
     def add_figure(self, fig, name, epoch):
         fig_name = f'{self.exp_name}-epoch-{epoch:02d}-{name}.png'
