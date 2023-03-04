@@ -10,7 +10,9 @@ from glob import glob
 from utills import sparse2coarse
 from constants import CIFAR10_PATH, CIFAR100_PATH, MNIST_PATH, FMNIST_PATH, SVHN_PATH, MVTEC_PATH, mvtec_labels
 import torchvision.transforms.functional as F
-
+import requests
+from PIL import Image
+from tqdm import tqdm
 
 tansform_224 = transforms.Compose([
                                     transforms.Resize(224),
@@ -161,15 +163,25 @@ def get_SVHN_normal(normal_class_indx:int, transform):
 
 
 class MVTecDataset(torch.utils.data.Dataset):
-    def __init__(self, root, category, transform=None, target_transform=None, train=True, normal=True):
+    def __init__(self, root, category, transform=None, target_transform=None, train=True, normal=True, download=False):
         self.transform = transform
+
+        # Check if dataset directory exists
+        dataset_dir = os.path.join(root, "mvtec_anomaly_detection")
+        if not os.path.exists(dataset_dir):
+            if download:
+                self.download_dataset(root)
+            else:
+                raise ValueError("Dataset not found. Please set download=True to download the dataset.")
+            
         if train:
             self.data = glob(
-                os.path.join(root, category, "train", "good", "*.png")
+                os.path.join(dataset_dir, category, "train", "good", "*.png")
             )
+
         else:
-          image_files = glob(os.path.join(root, category, "test", "*", "*.png"))
-          normal_image_files = glob(os.path.join(root, category, "test", "good", "*.png"))
+          image_files = glob(os.path.join(dataset_dir, category, "test", "*", "*.png"))
+          normal_image_files = glob(os.path.join(dataset_dir, category, "test", "good", "*.png"))
           anomaly_image_files = list(set(image_files) - set(normal_image_files))
           self.data = image_files
 
@@ -179,8 +191,9 @@ class MVTecDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         image_file = self.data[index]
+        image = image_file
         if self.transform is not None:
-            image = self.transform(image)
+            image = self.transform(image_file)
 
         if os.path.dirname(image_file).endswith("good"):
             target = 0
@@ -191,26 +204,35 @@ class MVTecDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.data)
+    
+    def download_dataset(self, root):
+        url = "https://www.mydrive.ch/shares/38536/3830184030e49fe74747669442f0f282/download/420938113-1629952094/mvtec_anomaly_detection.tar.xz"
+        dataset_dir = os.path.join(root, "mvtec_anomaly_detection")
+
+        # Create directory for dataset
+        os.makedirs(dataset_dir, exist_ok=True)
+
+        # Download and extract dataset
+        response = requests.get(url, stream=True)
+        total_size_in_bytes = int(response.headers.get('content-length', 0))
+        block_size = 1024
+        progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
+        with open(os.path.join(root, "mvtec_anomaly_detection.tar.xz"), 'wb') as f:
+            for data in response.iter_content(block_size):
+                progress_bar.update(len(data))
+                f.write(data)
+        progress_bar.close()
+
+        os.system(f"tar -xf {os.path.join(root, 'mvtec_anomaly_detection.tar.xz')} -C {dataset_dir}")
 
 
 def get_MVTEC_normal(normal_class_indx, transform):
     normal_class = mvtec_labels[normal_class_indx]
 
-    trainset = MVTecDataset(MVTEC_PATH, normal_class, train=True)
-    testset = MVTecDataset(MVTEC_PATH, normal_class, train=False, transform=transform)
+    trainset = MVTecDataset(MVTEC_PATH, normal_class, train=True, download=True)
+    testset = MVTecDataset(MVTEC_PATH, normal_class, train=False, download=True, transform=transform)
 
     return  [F.to_tensor(np.array(x).astype(np.uint8)) for x  in trainset.data], testset
-
-
-def download_and_extract_mvtec(path:str):
-    import os
-    import wget
-    import tarfile
-    so.extractall(path=os.environ['BACKUP_DIR'])
-    url = 'https://www.mydrive.ch/shares/38536/3830184030e49fe74747669442f0f282/download/420938113-1629952094/mvtec_anomaly_detection.tar.xz'
-    filename = wget.download(url, out=path)
-    with tarfile.open(os.path.join(path, filename)) as so:
-        so.extractall(path=os.path.join(path, "mvtec_anomaly_detection"))
 
 
 ######################
@@ -371,9 +393,18 @@ def get_SVHN_exposure(normal_dataset:str, normal_class_indx:int, count:int):
 
 
 class MVTecDatasetExposure(torch.utils.data.Dataset):
-    def __init__(self, root, category=None, transform=None):
+    def __init__(self, root, category=None, transform=None, download=False):
         self.transform = transform
-        self.data = glob(os.path.join(root, "**", "*.png"), recursive=True)
+        dataset_dir = os.path.join(root, "mvtec_anomaly_detection")
+    
+        if not os.path.exists(dataset_dir):
+            if download:
+                self.download_dataset(root)
+            else:
+                raise ValueError("Dataset not found. Please set download=True to download the dataset.")
+
+
+        self.data = glob(os.path.join(dataset_dir, "**", "*.png"), recursive=True)
 
         if category is not None:
           class_files = glob(os.path.join(root, category, "**", "*.png"), recursive=True)
@@ -382,9 +413,29 @@ class MVTecDatasetExposure(torch.utils.data.Dataset):
         self.data.sort(key=lambda y: y.lower())
         self.data = np.array([np.array(Image.open(x).convert('RGB')) for x in self.data])
 
+    def download_dataset(self, root):
+        url = "https://www.mydrive.ch/shares/38536/3830184030e49fe74747669442f0f282/download/420938113-1629952094/mvtec_anomaly_detection.tar.xz"
+        dataset_dir = os.path.join(root, "mvtec_anomaly_detection")
+
+        # Create directory for dataset
+        os.makedirs(dataset_dir, exist_ok=True)
+
+        # Download and extract dataset
+        response = requests.get(url, stream=True)
+        total_size_in_bytes = int(response.headers.get('content-length', 0))
+        block_size = 1024
+        progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
+        with open(os.path.join(root, "mvtec_anomaly_detection.tar.xz"), 'wb') as f:
+            for data in response.iter_content(block_size):
+                progress_bar.update(len(data))
+                f.write(data)
+        progress_bar.close()
+
+        os.system(f"tar -xf {os.path.join(root, 'mvtec_anomaly_detection.tar.xz')} -C {dataset_dir}")
+
 
 def get_MVTEC_exposure(normal_dataset:str, normal_class_indx:int, count:int):    
-    exposure_data = torch.tensor(MVTecDatasetExposure(root=MVTEC_PATH).data)
+    exposure_data = torch.tensor(MVTecDatasetExposure(root=MVTEC_PATH, category=None if normal_dataset!='mvtec' else mvtec_labels[normal_class_indx], download=True).data)
 
     if exposure_data.size(0) < count:
         copy_dataset(exposure_data, count)
