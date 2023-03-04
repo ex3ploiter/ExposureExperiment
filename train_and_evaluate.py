@@ -19,7 +19,7 @@ from datasets import get_dataloader
 import os
 from logger import Logger
 
-def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloader, writer, logger:Logger, test_step, save_step, max_epochs, device, loss_threshold=1e-3):
+def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloader, writer, logger:Logger, test_step:int, save_step:int, max_epochs:int, device, force_restart, loss_threshold=1e-3):
 
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
     criterion = nn.CrossEntropyLoss()
@@ -27,7 +27,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
 
     checkpoint = load_model_checkpoint(model=model, optimizer=optimizer, path=checkpoint_path)
 
-    if checkpoint is not None:
+    if not force_restart and checkpoint is not None:
         model, optimizer, init_epoch, loss = checkpoint
 
     vis_batch_train = get_visualization_batch(dataloader=trainloader, n=50)
@@ -303,5 +303,6 @@ run(model=model,\
     save_step=args.save_step,\
     max_epochs=args.max_epochs,\
     device=device,\
+    force_restart=args.force_restart,\
     loss_threshold=args.loss_threshold\
     )

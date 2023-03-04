@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument('--train_attack_step', help='Desired attack step for adversarial training', default=10, type=int)
 
     parser.add_argument("--clean", action="store_true", help="if true normal training else adversarial-training")
+    parser.add_argument("--force_restart", action="store_true", help="don't use already available checkpoints")
 
     parser.add_argument('--test_step', help='If given x, every x step a test would be performed', default=1, type=int)
     
