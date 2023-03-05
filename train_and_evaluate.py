@@ -15,7 +15,7 @@ from models import Net
 from constants import PGD_CONSTANT, dataset_labels
 from sklearn.metrics import roc_auc_score, accuracy_score
 from torch.utils.tensorboard.writer import SummaryWriter
-from datasets import get_dataloader
+from datasets.data_utils import get_dataloader
 import os
 from logger import Logger
 
@@ -45,7 +45,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
         logs = {}
 
         if epoch % test_step == 0 :
-                
+
                 test_auc = {}
                 test_accuracy = {}
 
@@ -79,7 +79,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
 
         torch.cuda.empty_cache()
 
-        
+
         if epoch < max_epochs:
             logger.add_log(f'Starting Training on epoch {init_epoch}')
             train_auc, train_accuracy, train_loss = train_one_epoch(epoch=epoch,\
@@ -91,7 +91,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
                                                                     train_attack=train_attack,\
                                                                     lr=0.1,\
                                                                     device=device)
-            
+
             writer.add_scalar('AUC-Train', train_auc, epoch)
             writer.add_scalar('Accuracy-Train', train_accuracy, epoch)
             writer.add_scalar('Train-Loss', train_loss, epoch)
@@ -103,7 +103,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
                 logger.add_log(f'Early Stopping! the train loss is lower than {loss_threshold}')
                 save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint_path, optimizer=optimizer)
                 break
-        
+
             if epoch > 0 and epoch % save_step == 0:
                 logger.add_log(f'Saved Model on epoch {epoch} at {checkpoint_path}')
                 save_model_checkpoint(model=model, epoch=epoch, loss=train_loss, path=checkpoint_path, optimizer=optimizer)
@@ -113,7 +113,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
     logger.add_log(f'Run successfully finished!')
     writer.close()
 
-def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader, train_attack, lr, device): 
+def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader, train_attack, lr, device):
 
     soft = torch.nn.Softmax(dim=1)
 
@@ -128,12 +128,12 @@ def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader,
         torch.cuda.empty_cache()
         for i, (data, target) in enumerate(tepoch):
             tepoch.set_description(f"Epoch {epoch + 1}/{max_epochs}")
-            updated_lr = lr_schedule(learning_rate=lr, t=epoch + (i + 1) / len(tepoch), max_epochs=max_epochs) 
+            updated_lr = lr_schedule(learning_rate=lr, t=epoch + (i + 1) / len(tepoch), max_epochs=max_epochs)
             optimizer.param_groups[0].update(lr=updated_lr)
-            
+
             data, target = data.to(device), target.to(device)
             target = target.type(torch.LongTensor).cuda()
-            
+
             # Adversarial attack on every batch
             data = train_attack(data, target)
 
@@ -149,7 +149,7 @@ def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader,
 
             # Adjust learning weights
             optimizer.step()
-            
+
             true_labels += target.detach().cpu().numpy().tolist()
 
             predictions = output.argmax(dim=1, keepdim=True).squeeze()
