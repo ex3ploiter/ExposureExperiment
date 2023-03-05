@@ -14,7 +14,25 @@
 ---
 
 ```sh
-python train_and_evaluate.py --source_dataset $SOURCE_DATASET --source_class $CLASS --exposure_dataset $EXPOSURE_DATASET --test_attacks ${TEST_ATTACKS[@]} --batch_size $BATCH_SIZE --max_epochs $MAX_EPOCHS --train_attack_step $TRAIN_ATTACK_STEP --test_step $TEST_STEP --save_step $SAVE_STEP --cuda_device $CUDA_DEVICE --loss_threshold $LOSS_THRESHOLD --model $MODEL_ARCHITECTURE $CLEAN_FLAG
+python train_and_evaluate.py \
+        --source_dataset $SOURCE_DATASET \
+        --source_class $CLASS \
+        --exposure_dataset $EXPOSURE_DATASET \
+        --test_attacks ${TEST_ATTACKS[@]} \
+        --batch_size $BATCH_SIZE \
+        --max_epochs $MAX_EPOCHS \
+        --train_attack_step $TRAIN_ATTACK_STEP \
+        --attack_eps $ATTACK_EPS \
+        --test_step $TEST_STEP \
+        --save_step $SAVE_STEP \
+        --cuda_device $CUDA_DEVICE \
+        --loss_threshold $LOSS_THRESHOLD \
+        --model $MODEL_ARCHITECTURE \
+        --checkpoints_path $CHECKPOINT_PATH \
+        --output_path $OUTPUT_PATH \
+        --tensorboard_path $TENSORBOARD_PATH \
+        --clean \
+        --force_restart
 ```
 
 #### More details on parameters
