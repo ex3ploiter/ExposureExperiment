@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch import optim
 from torchvision.utils import save_image
 from torchvision.utils import make_grid
-from utils import argsparser, auc_softmax, auc_softmax_adversarial, save_model_checkpoint, load_model_checkpoint, lr_schedule, get_visualization_batch, visualize, get_attack_name
+from utils import parse_args, auc_softmax, auc_softmax_adversarial, save_model_checkpoint, load_model_checkpoint, lr_schedule, get_visualization_batch, visualize, get_attack_name
 from tqdm import tqdm
 from torchattacks import FGSM, PGD, VANILA
 from Models.models import Net
@@ -80,7 +80,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
 
 
         if epoch < max_epochs:
-            logger.add_log(f'Starting Training on epoch {init_epoch}')
+            logger.add_log(f'====== Starting Training on epoch {epoch}')
             train_auc, train_accuracy, train_loss = train_one_epoch(epoch=epoch,\
                                                                     max_epochs=max_epochs, \
                                                                     model=model,\
@@ -172,7 +172,7 @@ def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader,
 #  Parsing Args  #
 ##################
 
-args = argsparser.parse_args()
+args = parse_args()
 
 
 #######################

@@ -1,7 +1,7 @@
 
 from torchvision.datasets import CIFAR10, CIFAR100, MNIST, SVHN, FashionMNIST
-from MVTecDataset import getMVTecDataset
-from AdaptiveExposureDataset import getAdaptiveExposureDataset
+from data.MVTecDataset import getMVTecDataset
+from data.AdaptiveExposureDataset import getAdaptiveExposureDataset
 import os
 import torch
 import numpy as np
