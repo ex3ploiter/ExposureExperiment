@@ -1,6 +1,7 @@
 
 from torchvision.datasets import CIFAR10, CIFAR100, MNIST, SVHN, FashionMNIST
 from MVTecAD import getMVTecDataset
+from AdaptiveExposureDataset import getAdaptiveExposureDataset
 import os
 import torch
 import numpy as np
@@ -21,7 +22,8 @@ dataset_paths = {
     "mnist":MNIST_PATH,
     "fashion":FMNIST_PATH,
     "svhn":SVHN_PATH,
-    "mvtec":MVTEC_PATH
+    "mvtec":MVTEC_PATH,
+    "adaptive":ADAPTIVE_PATH
 }
 
 tansform_224 = transforms.Compose([
@@ -149,27 +151,27 @@ def get_exposure(dataset:str='cifar10', normal_dataset:str='cifar100', normal_cl
             normal_class_indx = None,
             only_anomaly_in_test = False if normal_dataset!='mvtec' else True,
             remove_class_indx = None if normal_dataset!='mvtec' else mvtec_labels[normal_class_indx]
-        )
+        ),
+        "adaptive":getAdaptiveExposureDataset(normal_dataset, normal_class_indx)
     }
 
     if dataset in datasets_builders.keys():
         exposure_train = datasets_builders[dataset](root=dataset_paths[dataset], train=True, download=True) #CHECK transforms ?
-        exposure_test = datasets_builders[dataset](root=dataset_paths[dataset], train=False, download=True) #CHECK transforms ?
+        #exposure_test = datasets_builders[dataset](root=dataset_paths[dataset], train=False, download=True) #CHECK transforms ?
         if dataset == "cifar100":
             exposure_train.targets = sparse2coarse(exposure_train.targets)
-            exposure_test.targets = sparse2coarse(exposure_test.targets)
+            #exposure_test.targets = sparse2coarse(exposure_test.targets)
 
         if normal_dataset.lower() == dataset:
             exposure_train.data = exposure_train.data[np.array(exposure_train.targets) != normal_class_indx]
-            exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
+            #exposure_test.data = exposure_test.data[np.array(exposure_test.targets) != normal_class_indx]
 
-        exposure_data = torch.tensor(exposure_test.data)
-        del exposure_test
-
-        if exposure_data.size(0) < count:
-            exposure_data = torch.cat((exposure_data, torch.tensor(exposure_train.data)), 0)
-
+        exposure_data = torch.tensor(exposure_train.data)
         del exposure_train
+
+        #if exposure_data.size(0) < count:
+        #    exposure_data = torch.cat((exposure_data, torch.tensor(exposure_test.data)), 0)
+        #del exposure_train
 
         if exposure_data.size(0) < count:
             copy_dataset(exposure_data, count)
