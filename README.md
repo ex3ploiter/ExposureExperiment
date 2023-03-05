@@ -62,10 +62,10 @@ python train_and_evaluate.py --source_dataset $SOURCE_DATASET --source_class $CL
 - Clean AUROC after normal training
 - Clean AUROC after adversarial training
 - Robust AUROC after adversarial training
+- FID Score Support ([in this repos](https://github.com/mohammadjafari80/pytorch-fid-exposure))
 
 ### TODO
 
 ---
 
-- FID Score Support
 - MVTEC Ram Efficient support
