@@ -5,7 +5,7 @@ MNIST_PATH = '~/MNIST/'
 FMNIST_PATH = '~/FMNIST/'
 SVHN_PATH = '~/SVHN/'
 MVTEC_PATH = '~/MVTEC/'
-
+ADAPTIVE_PATH = './ADAPTIVE/'
 PGD_CONSTANT = 2.5
 
 mvtec_labels = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'leather',
