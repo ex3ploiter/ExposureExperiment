@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 from PIL import Image
 from glob import glob
-from constants import MVTEC_PATH, mvtec_labels
+from data.constants import MVTEC_PATH, mvtec_labels
 import torchvision.transforms.functional as F
 import requests
 from PIL import Image

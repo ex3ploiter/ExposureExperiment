@@ -1,6 +1,6 @@
 
 from torchvision.datasets import CIFAR10, CIFAR100, MNIST, SVHN, FashionMNIST
-from MVTecAD import getMVTecDataset
+from MVTecDataset import getMVTecDataset
 from AdaptiveExposureDataset import getAdaptiveExposureDataset
 import os
 import torch
@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 from glob import glob
 from utills import sparse2coarse
-from constants import CIFAR10_PATH, CIFAR100_PATH, MNIST_PATH, FMNIST_PATH, SVHN_PATH, MVTEC_PATH, ADAPTIVE_PATH, mvtec_labels
+from data.constants import CIFAR10_PATH, CIFAR100_PATH, MNIST_PATH, FMNIST_PATH, SVHN_PATH, MVTEC_PATH, ADAPTIVE_PATH, mvtec_labels
 import torchvision.transforms.functional as F
 import requests
 from PIL import Image

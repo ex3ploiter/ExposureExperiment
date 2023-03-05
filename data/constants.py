@@ -1,12 +1,11 @@
 # Change this path based on your system paths
-CIFAR10_PATH = '~/CIFAR10/'
-CIFAR100_PATH = '~/CIFAR100/'
-MNIST_PATH = '~/MNIST/'
-FMNIST_PATH = '~/FMNIST/'
-SVHN_PATH = '~/SVHN/'
-MVTEC_PATH = '~/MVTEC/'
-ADAPTIVE_PATH = './ADAPTIVE/'
-PGD_CONSTANT = 2.5
+CIFAR10_PATH = './Datasets/CIFAR10/'
+CIFAR100_PATH = './Datasets/CIFAR100/'
+MNIST_PATH = './Datasets/MNIST/'
+FMNIST_PATH = './Datasets/FMNIST/'
+SVHN_PATH = './Datasets/SVHN/'
+MVTEC_PATH = './Datasets/MVTEC/'
+ADAPTIVE_PATH = './Datasets/ADAPTIVE/'
 
 mvtec_labels = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'leather',
                 'metal_nut', 'pill', 'screw', 'tile', 'toothbrush', 'transistor',

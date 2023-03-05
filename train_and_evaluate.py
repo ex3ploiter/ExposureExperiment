@@ -11,11 +11,11 @@ from torchvision.utils import make_grid
 from utills import auc_softmax, auc_softmax_adversarial, save_model_checkpoint, load_model_checkpoint, lr_schedule, get_visualization_batch, visualize, get_attack_name
 from tqdm import tqdm
 from torchattacks import FGSM, PGD, VANILA
-from models import Net
-from constants import PGD_CONSTANT, dataset_labels
+from Models.models import Net
+from data.constants import dataset_labels
 from sklearn.metrics import roc_auc_score, accuracy_score
 from torch.utils.tensorboard.writer import SummaryWriter
-from datasets.data_utils import get_dataloader
+from data.data_utils import get_dataloader
 import os
 from logger import Logger
 
@@ -244,7 +244,7 @@ for test_attack in args.test_attacks:
             test_attacks[test_attack] = current_attack
         elif attack_type == 'PGD':
             steps = eval(test_attack.split('-')[1])
-            alpha = (PGD_CONSTANT * attack_eps) / steps
+            alpha = (args.pgd_constant * attack_eps) / steps
             current_attack = PGD(model, eps=attack_eps, alpha=alpha, steps=steps)
             current_attack.set_mode_targeted_least_likely()
             test_attacks[test_attack] = current_attack
@@ -257,7 +257,7 @@ for test_attack in args.test_attacks:
 ######################
 
 train_steps = args.train_attack_step
-train_alpha = (PGD_CONSTANT * attack_eps) / train_steps
+train_alpha = (args.pgd_constant * attack_eps) / train_steps
 train_attack = PGD(model, eps=attack_eps, alpha=train_alpha, steps=train_steps) if not args.clean else VANILA(model)
 
 
