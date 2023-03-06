@@ -47,7 +47,11 @@ class Net(nn.Module):
     else:
       raise ValueError('Invalid Model Type!')
 
-    self.head = nn.Linear(512, 2)
+    # self.head = nn.Linear(512, 2)
+
+    num_ftrs = self.model.linear.in_features
+    self.model.linear = nn.Flatten()
+    self.head = nn.Linear(num_ftrs, 2)    
 
   def forward(self, x):
     x = self.model(x)
