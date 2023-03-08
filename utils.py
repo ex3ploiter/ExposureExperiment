@@ -253,7 +253,7 @@ def parse_args():
                                  'resnet50', 'preactresnet50', 'pretrained_resnet50', \
                                  'resnet101', 'preactresnet101', 'pretrained_resnet101', \
                                  'resnet152', 'preactresnet152', 'pretrained_resnet152', \
-                                 'vit'], default='preactresnet18', type=str)
+                                 'vit_b_16'], default='preactresnet18', type=str)
 
 
     return parser.parse_args()

@@ -34,7 +34,7 @@ class Net(nn.Module):
         self.model = models.resnet152(weights=None if not pretrained else models.ResNet152_Weights.DEFAULT)
 
     elif model == 'vit_b_16':
-        self.model = models.vit_b_16(weights=None if not pretrained else models.ViT_B_16_Weights.DEFAULT)
+        self.model = models.vit_b_16(image_size=32,weights=models.ViT_B_16_Weights.DEFAULT)
     elif model == 'vit_b_32':
         self.model = models.vit_b_32(weights=None if not pretrained else models.ViT_B_32_Weights.DEFAULT)
     elif model == 'vit_l_16':
@@ -47,11 +47,7 @@ class Net(nn.Module):
     else:
       raise ValueError('Invalid Model Type!')
 
-    # self.head = nn.Linear(512, 2)
-
-    num_ftrs = self.model.linear.in_features
-    self.model.linear = nn.Flatten()
-    self.head = nn.Linear(num_ftrs, 2)    
+    self.head = nn.Linear(1000, 2)
 
   def forward(self, x):
     x = self.model(x)

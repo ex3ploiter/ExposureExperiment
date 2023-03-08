@@ -32,8 +32,8 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
     vis_batch_train = get_visualization_batch(dataloader=trainloader, n=50)
     vis_batch_test = get_visualization_batch(dataloader=testloader, n=50)
 
-    writer.add_graph(model, vis_batch_train[0])
-    writer.flush()
+    # writer.add_graph(model, vis_batch_train[0])
+    # writer.flush()
 
     logger.add_log(f'Starting Run from epoch {init_epoch}')
 
@@ -64,17 +64,17 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
                     logs[f'AUC-{get_attack_name(attack)}'], logs[f'Accuracy-{get_attack_name(attack)}'] = adv_auc, adv_accuracy
 
 
-                writer.add_scalars('AUC-Test', test_auc, epoch)
-                writer.add_scalars('Accuracy-Test', test_accuracy, epoch)
-                writer.flush()
+                # writer.add_scalars('AUC-Test', test_auc, epoch)
+                # writer.add_scalars('Accuracy-Test', test_accuracy, epoch)
+                # writer.flush()
 
                 for attack_name, attack in test_attacks.items():
                     fig_train, fig_test =  visualize(vis_batch_train[0], vis_batch_train[1], attack), visualize(vis_batch_test[0], vis_batch_test[1], attack)
-                    writer.add_figure(f'Sample Peturbations Train {get_attack_name(attack)}', fig_train, epoch)
-                    writer.add_figure(f'Sample Peturbations Test {get_attack_name(attack)}', fig_test, epoch)
+                    # writer.add_figure(f'Sample Peturbations Train {get_attack_name(attack)}', fig_train, epoch)
+                    # writer.add_figure(f'Sample Peturbations Test {get_attack_name(attack)}', fig_test, epoch)
                     logger.add_figure(fig=fig_train, epoch=epoch, name='train')
                     logger.add_figure(fig=fig_train, epoch=epoch, name='test')
-                    writer.flush()
+                    # writer.flush()
 
         torch.cuda.empty_cache()
 
@@ -91,10 +91,10 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
                                                                     lr=0.1,\
                                                                     device=device)
 
-            writer.add_scalar('AUC-Train', train_auc, epoch)
-            writer.add_scalar('Accuracy-Train', train_accuracy, epoch)
-            writer.add_scalar('Train-Loss', train_loss, epoch)
-            writer.flush()
+            # writer.add_scalar('AUC-Train', train_auc, epoch)
+            # writer.add_scalar('Accuracy-Train', train_accuracy, epoch)
+            # writer.add_scalar('Train-Loss', train_loss, epoch)
+            # writer.flush()
 
             logs['AUC-Train'],  logs['Accuracy-Train'], logs['Train-Loss'] = train_auc, train_accuracy, train_loss
 
@@ -110,7 +110,7 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
         logger.add_csv(dict_to_append=logs)
 
     logger.add_log(f'Run successfully finished!')
-    writer.close()
+    # writer.close()
 
 def train_one_epoch(epoch, max_epochs, model, optimizer, criterion, trainloader, train_attack, lr, device):
 
@@ -284,7 +284,8 @@ checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 ############################
 
 writer_dir = os.path.join(args.tensorboard_path, "Clean-Train" if args.clean else "Adversarial-Train", f'normal-{args.source_dataset}', f'normal-class-{args.source_class:02d}-{dataset_labels[args.source_dataset][args.source_class]}', f'exposure-{args.exposure_dataset}')
-writer = SummaryWriter(writer_dir)
+# writer = SummaryWriter(writer_dir)
+writer = None
 
 
 ##################################
