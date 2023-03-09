@@ -23,6 +23,7 @@ class Net(nn.Module):
         self.model = preactresnet.PreActResNet152()
 
     elif model == 'resnet18':
+        pretrained=True
         self.model = models.resnet18(weights=None if not pretrained else models.ResNet18_Weights.DEFAULT)
     elif model == 'resnet34':
         self.model = models.resnet34(weights=None if not pretrained else models.ResNet34_Weights.DEFAULT)
@@ -34,7 +35,7 @@ class Net(nn.Module):
         self.model = models.resnet152(weights=None if not pretrained else models.ResNet152_Weights.DEFAULT)
 
     elif model == 'vit_b_16':
-        self.model = models.vit_b_16(image_size=32,weights=models.ViT_B_16_Weights.DEFAULT)
+        self.model = models.vit_b_16(weights=None if not pretrained else models.ViT_B_32_Weights.DEFAULT)
     elif model == 'vit_b_32':
         self.model = models.vit_b_32(weights=None if not pretrained else models.ViT_B_32_Weights.DEFAULT)
     elif model == 'vit_l_16':
