@@ -31,8 +31,8 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
     if not force_restart and checkpoint is not None:
         model, optimizer, init_epoch, loss = checkpoint
 
-    vis_batch_train = get_visualization_batch(dataloader=trainloader, n=50)
-    vis_batch_test = get_visualization_batch(dataloader=testloader, n=50)
+    vis_batch_train = get_visualization_batch(dataloader=trainloader, n=8)
+    vis_batch_test = get_visualization_batch(dataloader=testloader, n=8)
 
     # writer.add_graph(model, vis_batch_train[0])
     # writer.flush()
