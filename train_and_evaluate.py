@@ -20,7 +20,9 @@ from logger import Logger
 
 def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloader, writer, logger:Logger, test_step:int, save_step:int, max_epochs:int, device, force_restart, loss_threshold=1e-3):
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+    optimizer = optim.Adam(model.parameters(), lr = 1e-3)
+
     criterion = nn.CrossEntropyLoss()
     init_epoch = 0
 
@@ -67,6 +69,8 @@ def run(model, checkpoint_path, train_attack, test_attacks, trainloader, testloa
                 # writer.add_scalars('AUC-Test', test_auc, epoch)
                 # writer.add_scalars('Accuracy-Test', test_accuracy, epoch)
                 # writer.flush()
+
+                torch.cuda.empty_cache()
 
                 for attack_name, attack in test_attacks.items():
                     fig_train, fig_test =  visualize(vis_batch_train[0], vis_batch_train[1], attack), visualize(vis_batch_test[0], vis_batch_test[1], attack)
