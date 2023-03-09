@@ -74,7 +74,10 @@ def get_dataloader(normal_dataset:str, normal_class_indx:int, exposure_dataset:s
 
     transform = None
 
-    is_big: bool = True if normal_dataset in ['mvtec', 'ctscan'] else False
+    # is_big: bool = True if normal_dataset in ['mvtec', 'ctscan'] else False
+    is_big=True
+
+
     is_colorful: bool = True if normal_dataset in ['cifar10', 'cifar100', 'svhn', 'mvtec'] else False
 
     if is_big:
