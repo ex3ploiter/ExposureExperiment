@@ -10,6 +10,7 @@ import torchvision.transforms.functional as F
 import requests
 from PIL import Image
 from tqdm import tqdm
+import cv2
 
 def getAdaptiveExposureDataset(normal_dataset, normal_class_indx):
     class AdaptiveExposureDataset(torch.utils.data.Dataset):
@@ -17,9 +18,25 @@ def getAdaptiveExposureDataset(normal_dataset, normal_class_indx):
             self.transform = transform
             self.data = []
             try:
-                file_paths = glob(os.path.join(ADAPTIVE_PATH, normal_dataset, f'{normal_class_indx}', "*.npy"), recursive=True)
+                # file_paths = glob(os.path.join(ADAPTIVE_PATH, normal_dataset, f'{normal_class_indx}', "*.npy"), recursive=True)
+                
+
+                file_paths = glob(os.path.join(ADAPTIVE_PATH,(f'{normal_dataset}_GLIDE_*{normal_class_indx}_*.npy')), recursive=True)
+
+                print(file_paths)
+
                 for path in file_paths:
-                    self.data += np.load(path).tolist()
+                    
+                    # self.data += np.load(path).tolist()
+                    
+                    loaded=np.load(path).transpose(0,2,3,1)
+                    norm_image = cv2.normalize(loaded, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
+                    norm_image = norm_image.astype(np.uint8)
+                    
+                    self.data += norm_image.tolist()
+
+
+
             except:
                 raise ValueError('Wrong Exposure Address!')
             self.train = train
@@ -36,3 +53,5 @@ def getAdaptiveExposureDataset(normal_dataset, normal_class_indx):
 
         def __len__(self):
             return len(self.data)
+
+    return AdaptiveExposureDataset
