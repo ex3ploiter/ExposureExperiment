@@ -5,7 +5,7 @@ MNIST_PATH = '.data/Datasets/MNIST/'
 FMNIST_PATH = '.data/Datasets/FMNIST/'
 SVHN_PATH = '.data/Datasets/SVHN/'
 MVTEC_PATH = '.data/Datasets/MVTEC/'
-ADAPTIVE_PATH = '.data/Datasets/ADAPTIVE/'
+ADAPTIVE_PATH = 'ADAPTIVE/'
 
 mvtec_labels = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'leather',
                 'metal_nut', 'pill', 'screw', 'tile', 'toothbrush', 'transistor',
