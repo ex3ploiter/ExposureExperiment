@@ -238,7 +238,11 @@ except:
 test_attacks = {}
 
 
-for test_attack in args.test_attacks:
+test_attacks_arr=['FGSM', 'PGD-10'] #Change1
+
+# for test_attack in args.test_attacks:
+
+for test_attack in test_attacks_arr: #Change2
     try:
         attack_type = test_attack.split('-')[0] if test_attack != 'FGSM' else 'FGSM'
         if attack_type == 'FGSM':

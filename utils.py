@@ -231,7 +231,7 @@ def parse_args():
 
     parser.add_argument("--pgd_constant", help='PGD Constant', default=2.5, type=float)
 
-    parser.add_argument('--test_attacks', help='Desired Attacks for adversarial test', nargs='+', action='extend')
+    # parser.add_argument('--test_attacks', help='Desired Attacks for adversarial test', nargs='+', action='extend') #Change3
 
     parser.add_argument('--train_attack_step', help='Desired attack step for adversarial training', default=10, type=int)
 
