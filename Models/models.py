@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import Models.preactresnet as preactresnet
+import dill 
 
 class Net(nn.Module):
   def __init__(self, model:str='preactresnet18', pretrained:bool=False):
@@ -47,7 +48,31 @@ class Net(nn.Module):
     else:
       raise ValueError('Invalid Model Type!')
 
-    self.head = nn.Linear(512, 2)
+    
+    mode =1
+    
+    resume_path=''
+    # resume_path='/content/ExposureExperiment/resnet18_linf_eps8.0.ckpt?sv=2020-08-04&ss=bfqt&srt=sco&sp=rwdlacupitfx&se=2051-10-06T07:09:59Z&st=2021-10-05T23:09:59Z&spr=https,http&sig=U69sEOSMlliobiw8OgiZpLTaYyOA5yt5pHHH5%2FKUYgI='
+    
+    checkpoint = torch.load(resume_path, pickle_module=dill)
+    state_dict_path = 'model'
+    if not ('model' in checkpoint):
+      state_dict_path = 'state_dict'
+    sd = checkpoint[state_dict_path]
+    sd = {k[len('module.'):]:v for k,v in sd.items()}
+
+    if mode ==0: # Model
+       sd_t = {k[len('model.'):]:v for k,v in sd.items() if k.split('.')[0]=='model'} 
+       
+    elif mode ==1: # Attacker
+       sd_t = {k[len('attacker.model.'):]:v for k,v in sd.items() if k.split('.')[0]=='attacker' and k.split('.')[1]!='normalize'}
+       
+
+    self.model.load_state_dict(sd_t)
+    print("=> loaded checkpoint '{}' (epoch {})".format(resume_path, checkpoint['epoch']))    
+
+    
+    self.head = nn.Linear(1000, 2)
 
   def forward(self, x):
     x = self.model(x)

@@ -20,6 +20,7 @@ def getAdaptiveExposureDataset(normal_dataset, normal_class_indx):
             try:
                 # file_paths = glob(os.path.join(ADAPTIVE_PATH, normal_dataset, f'{normal_class_indx}', "*.npy"), recursive=True)
                 file_paths = glob(os.path.join(ADAPTIVE_PATH,(f'{normal_dataset}_GLIDE_*{normal_class_indx}_*.npy')), recursive=True)
+                print(file_paths)
                 
                 for path in file_paths:
                     # self.data += np.load(path).tolist()
